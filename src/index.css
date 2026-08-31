@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Clinical Precision design tokens
+   Deep navy sidebar/headings, amber-gold accent, cool-gray surface
+   --------------------------------------------------------------- */
+:root {
+  --navy: #0b1c30;          /* sidebar / primary surfaces */
+  --navy-800: #182f49;
+  --amber: #febb06;         /* accent / pending */
+  --surface: #f8f9ff;       /* app canvas */
+}
+
+html, body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  background: var(--surface);
+  color: #0b1c30;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings use Plus Jakarta Sans */
+h1, h2, h3, .font-display {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+
+/* Tabular figures for data tables (aligned digits) */
+table td, table th, .tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* thin scrollbars in the navy sidebar */
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #33415580; border-radius: 9999px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }

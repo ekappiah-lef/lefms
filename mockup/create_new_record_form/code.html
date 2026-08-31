@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create New Record - Meridian General</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary-fixed": "#002204",
+                        "surface-container": "#e5eeff",
+                        "tertiary-fixed-dim": "#88d982",
+                        "primary-container": "#182f49",
+                        "on-background": "#0b1c30",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-container-high": "#dce9ff",
+                        "on-primary-container": "#8197b6",
+                        "surface-container-low": "#eff4ff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#021c36",
+                        "on-primary-fixed-variant": "#324863",
+                        "on-surface": "#0b1c30",
+                        "on-secondary-container": "#6c4d00",
+                        "secondary": "#7b5800",
+                        "outline": "#74777e",
+                        "outline-variant": "#c4c6ce",
+                        "tertiary-fixed": "#a3f69c",
+                        "on-surface-variant": "#43474d",
+                        "primary-fixed-dim": "#b2c8e9",
+                        "secondary-container": "#febb06",
+                        "tertiary": "#001f03",
+                        "on-error": "#ffffff",
+                        "primary": "#001a33",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#b2c8e9",
+                        "tertiary-container": "#003709",
+                        "background": "#f8f9ff",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "on-tertiary-fixed-variant": "#005312",
+                        "secondary-fixed": "#ffdea4",
+                        "on-secondary-fixed": "#261900",
+                        "secondary-fixed-dim": "#febb06",
+                        "primary-fixed": "#d2e4ff",
+                        "surface-tint": "#4a607c",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary-container": "#58a756",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#5d4200",
+                        "inverse-surface": "#213145",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f8f9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "1rem",
+                        "sidebar-width": "260px",
+                        "xl": "2rem",
+                        "xs": "0.5rem",
+                        "sm": "0.75rem",
+                        "lg": "1.5rem",
+                        "margin-mobile": "1rem",
+                        "baseline": "4px",
+                        "margin-desktop": "2rem",
+                        "gutter": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "label-lg": ["Inter"],
+                        "headline-xl": ["Plus Jakarta Sans"],
+                        "data-tabular": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-tabular": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Subtle elevation for clinical setting */
+        .elevation-1 {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        }
+        
+        /* Custom input styles for form */
+        .clinical-input {
+            border: 1px solid theme('colors.outline-variant');
+            border-radius: theme('borderRadius.lg');
+            background-color: theme('colors.surface-container-lowest');
+            padding: theme('spacing.sm') theme('spacing.md');
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .clinical-input:focus {
+            outline: none;
+            border-color: theme('colors.primary');
+            box-shadow: 0 0 0 2px rgba(0, 26, 51, 0.1);
+        }
+        
+        .clinical-label {
+            display: block;
+            margin-bottom: theme('spacing.xs');
+            color: theme('colors.on-surface-variant');
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex font-body-md">
+<!-- SideNavBar (Shared Component) -->
+<!-- Not rendering SideNav or TopNav as per Semantic Shell Mandate: 
+         "Automatic Suppression: You MUST exclude the navigation shell if the page intent is: 
+         Linear/Transactional: Login, Sign-up, Onboarding, Checkout, or 'Success/Confirmation' splash screens."
+         
+         However, the user prompt specifically requests: "Ensure consistent sidebar and top navigation as seen in SCREEN_6 and SCREEN_5."
+         
+         Applying Conflict Resolution Protocol: User Prompt overrides general logic IF explicitly requested, BUT the core instructions say:
+         "The "Destination" Rule: You are only permitted to render the BottomNavBar or SideNav if the current screen represents a top-level destination within the app's primary ecosystem."
+         
+         Since the prompt *explicitly* asks for it, I will include it, assuming this is a modal-like full page view within the main app shell.
+         Active state: Fallback to Intent -> Front Desk (Admitting a patient).
+    -->
+<nav class="bg-primary dark:bg-primary-container text-on-primary dark:text-on-primary-container w-sidebar-width h-screen fixed left-0 top-0 overflow-y-auto shadow-lg flex flex-col w-[260px] shrink-0 z-50">
+<!-- Brand Header -->
+<div class="p-lg flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center shrink-0">
+<img alt="Meridian General Logo" class="w-6 h-6 object-contain" data-alt="A clean, minimalist logo featuring a stylized medical cross integrated with a geometric M, rendered in crisp white against a dark navy blue background, modern corporate healthcare aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrTpgWfM8M6q-DDhsyMvD0nnvs2QOFrmHrZzY4KbdOkCbFaJoAoxLl2jQj1FwJdmMb5DkN8cosSzhmwjjhjn11WusWQqtsMbqO8YrC1l979kd0XXeq_0txPtRo1nnrHKm0Zf9ehzLlRK-IiBg8g9uPlFLWM3tQ-uw38D3dddCu6W6cuezHuRgWpnTmwi2eeEiQX3kaHEO1UJxfXoI7EuHkFoTnUSZgsAdoCmqvobEgZhLd3WpA_hDt"/>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-lg font-headline-lg font-bold text-white tracking-tight">Meridian General</span>
+<span class="text-label-md font-label-md text-on-primary-container">Operations Platform</span>
+</div>
+</div>
+<!-- Primary CTA -->
+<div class="px-md mb-lg">
+<button class="w-full bg-secondary-container hover:bg-secondary-fixed-dim text-on-secondary-container font-label-lg text-label-lg py-sm px-md rounded-lg flex items-center justify-center gap-xs transition-colors shadow-sm">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                New Request
+            </button>
+</div>
+<!-- Main Navigation -->
+<div class="flex-1 overflow-y-auto px-xs flex flex-col gap-xs">
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<!-- Active State -->
+<a class="bg-white/10 text-white font-bold rounded-lg mx-2 flex items-center gap-md font-label-md text-label-md px-4 py-2 shadow-sm scale-95 duration-150 relative" href="#">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-secondary-container rounded-r-full"></div>
+<span class="material-symbols-outlined" data-icon="desk" data-weight="fill">desk</span>
+                Front Desk
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="event">event</span>
+                Appointments
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+                OPD / Patient Flow
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="meeting_room">meeting_room</span>
+                Wards
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="bed">bed</span>
+                Bed Management
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="medical_services">medical_services</span>
+                Nursing
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="stethoscope">stethoscope</span>
+                Doctors
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="medical_information">medical_information</span>
+                Theatre
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+                Laboratory
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="medication">medication</span>
+                Pharmacy
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="engineering">engineering</span>
+                Maintenance
+            </a>
+</div>
+<!-- Footer Navigation -->
+<div class="mt-auto border-t border-on-primary-container/20 p-xs flex flex-col gap-xs pb-lg">
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+                Human Resources
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+                Finance
+            </a>
+<a class="text-on-primary/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/5 transition-all duration-200 flex items-center gap-md font-label-md text-label-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<div class="flex-1 flex flex-col ml-[260px] min-w-0 bg-background">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface dark:bg-inverse-surface h-16 w-full sticky top-0 z-40 border-b border-outline-variant dark:border-outline shadow-sm flex justify-between items-center px-lg">
+<!-- Navigation Links (Left) -->
+<div class="flex items-center gap-xl h-full">
+<a class="h-full flex items-center text-on-surface-variant dark:text-surface-variant font-label-lg text-label-lg hover:bg-surface-container-low transition-colors px-sm" href="#">
+                    Facility Overview
+                </a>
+<a class="h-full flex items-center text-on-surface-variant dark:text-surface-variant font-label-lg text-label-lg hover:bg-surface-container-low transition-colors px-sm" href="#">
+                    Live Status
+                </a>
+</div>
+<!-- Actions & Profile (Right) -->
+<div class="flex items-center gap-md">
+<!-- Search Bar -->
+<div class="relative hidden lg:block mr-md group focus-within:ring-2 focus-within:ring-primary/20 duration-300 rounded-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" data-icon="search">search</span>
+<input class="bg-surface-container-low border border-outline-variant rounded-full py-1.5 pl-10 pr-4 text-body-sm font-body-sm w-64 focus:outline-none focus:border-primary transition-colors text-on-surface placeholder:text-on-surface-variant" placeholder="Search patients, records..." type="text"/>
+</div>
+<!-- Trailing Icons -->
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border border-surface"></span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-px h-8 bg-outline-variant mx-xs"></div>
+<!-- Profile -->
+<button class="flex items-center gap-sm hover:bg-surface-container-low p-1 pr-3 rounded-full transition-colors border border-transparent hover:border-outline-variant">
+<img alt="Dr. Alexander Vaughan" class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="Professional headshot of a male doctor, Dr. Alexander Vaughan, in his mid 40s, wearing a white coat over a blue shirt, well-lit studio lighting, clinical environment, neutral background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZS9N66LOGe8L1Gjd3mHWo35GhUb-2wZTwvr42kkVs7YcfqMN9nGffjZlWnshqi7i1sbJKPOx2nAbbmo6RBP9kBoB8jgvh8g4sVW_-VUbFAFZZwnfacdfvkzLxUFrHgknfZ1jYMVUMB2bDMgk51YJPpiXFTKV7gziyluZfgfuoEBqdZDvP2Kxk5p4LlQSFbxRqXRTPeClxi4bmKphgMGt7tuP7E-8MpHud5KZs9O_PE7KRjq20T6vT"/>
+<div class="flex flex-col items-start hidden md:flex">
+<span class="text-label-md font-label-md text-on-surface">Dr. A. Vaughan</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant" style="font-size: 10px; line-height: 12px;">Admin</span>
+</div>
+</button>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 overflow-y-auto p-margin-desktop bg-background">
+<!-- Page Header -->
+<div class="max-w-5xl mx-auto mb-lg flex flex-col md:flex-row md:items-center justify-between gap-md">
+<div>
+<div class="flex items-center gap-xs text-on-surface-variant mb-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_back">arrow_back</span>
+<a class="text-body-sm font-body-sm hover:text-primary transition-colors" href="#">Back to Front Desk</a>
+</div>
+<h1 class="text-headline-xl font-headline-xl text-on-background tracking-tight">Create New Record</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant mt-1">Enter patient details to initialize a new clinical episode.</p>
+</div>
+<div class="flex items-center gap-sm">
+<span class="bg-surface-container-high text-on-surface font-label-md text-label-md px-3 py-1 rounded-full flex items-center gap-xs border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
+                        Draft Mode
+                    </span>
+</div>
+</div>
+<!-- Form Container -->
+<div class="max-w-5xl mx-auto bg-surface-container-lowest rounded-xl border border-outline-variant elevation-1 overflow-hidden">
+<form class="divide-y divide-outline-variant">
+<!-- SECTION: Basic Information -->
+<div class="p-xl lg:flex gap-xl">
+<div class="lg:w-1/3 shrink-0 mb-md lg:mb-0">
+<h2 class="text-headline-md font-headline-md text-on-background mb-xs flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+                                Basic Information
+                            </h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Primary identifiers and demographic details required for registration.</p>
+</div>
+<div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="md:col-span-2 flex gap-md">
+<div class="flex-1">
+<label class="font-label-md clinical-label">First Name *</label>
+<input class="font-body-md clinical-input" placeholder="e.g. Sarah" type="text"/>
+</div>
+<div class="flex-1">
+<label class="font-label-md clinical-label">Last Name *</label>
+<input class="font-body-md clinical-input" placeholder="e.g. Jenkins" type="text"/>
+</div>
+</div>
+<div>
+<label class="font-label-md clinical-label">National ID / Passport *</label>
+<input class="font-body-md clinical-input" placeholder="ID Number" type="text"/>
+</div>
+<div>
+<label class="font-label-md clinical-label">Date of Birth *</label>
+<div class="relative">
+<input class="font-body-md clinical-input pl-10" type="date"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]" data-icon="calendar_month">calendar_month</span>
+</div>
+</div>
+<div>
+<label class="font-label-md clinical-label">Biological Sex *</label>
+<select class="font-body-md clinical-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2343474d%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_12px_center] pr-10">
+<option disabled="" selected="" value="">Select Sex</option>
+<option value="f">Female</option>
+<option value="m">Male</option>
+<option value="i">Intersex</option>
+</select>
+</div>
+<div>
+<label class="font-label-md clinical-label">Blood Type (Optional)</label>
+<select class="font-body-md clinical-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2343474d%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_12px_center] pr-10">
+<option disabled="" selected="" value="">Unknown</option>
+<option>A+</option><option>A-</option>
+<option>B+</option><option>B-</option>
+<option>O+</option><option>O-</option>
+<option>AB+</option><option>AB-</option>
+</select>
+</div>
+</div>
+</div>
+<!-- SECTION: Clinical Details -->
+<div class="p-xl lg:flex gap-xl bg-surface-bright/50">
+<div class="lg:w-1/3 shrink-0 mb-md lg:mb-0">
+<h2 class="text-headline-md font-headline-md text-on-background mb-xs flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="stethoscope">stethoscope</span>
+                                Clinical Details
+                            </h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Routing and initial presenting complaint information.</p>
+</div>
+<div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-md">
+<div>
+<label class="font-label-md clinical-label">Assign Department *</label>
+<select class="font-body-md clinical-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2343474d%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_12px_center] pr-10">
+<option disabled="" selected="" value="">Select Department...</option>
+<option>Cardiology</option>
+<option>General Medicine</option>
+<option>Orthopedics</option>
+<option>Pediatrics</option>
+<option>Emergency (A&amp;E)</option>
+</select>
+</div>
+<div>
+<label class="font-label-md clinical-label">Admitting Doctor (Optional)</label>
+<div class="relative">
+<input class="font-body-md clinical-input pl-10" placeholder="Search provider directory..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]" data-icon="search">search</span>
+</div>
+</div>
+<div class="md:col-span-2">
+<label class="font-label-md clinical-label">Reason for Visit / Presenting Complaint *</label>
+<textarea class="font-body-md clinical-input min-h-[100px] resize-y" placeholder="Briefly describe the symptoms or reason for admission..."></textarea>
+</div>
+<div class="md:col-span-2 flex items-center gap-sm mt-xs">
+<input class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary focus:ring-offset-0" id="urgent" type="checkbox"/>
+<label class="font-body-md text-on-surface flex items-center gap-xs cursor-pointer" for="urgent">
+                                    Mark as High Priority / Urgent
+                                    <span class="w-2 h-2 rounded-full bg-error ml-1"></span>
+</label>
+</div>
+</div>
+</div>
+<!-- SECTION: Contact Information -->
+<div class="p-xl lg:flex gap-xl">
+<div class="lg:w-1/3 shrink-0 mb-md lg:mb-0">
+<h2 class="text-headline-md font-headline-md text-on-background mb-xs flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="contact_phone">contact_phone</span>
+                                Contact Information
+                            </h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Primary patient contact and emergency next of kin details.</p>
+</div>
+<div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-md">
+<div>
+<label class="font-label-md clinical-label">Primary Phone *</label>
+<input class="font-body-md clinical-input" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+<div>
+<label class="font-label-md clinical-label">Email Address</label>
+<input class="font-body-md clinical-input" placeholder="patient@example.com" type="email"/>
+</div>
+<div class="md:col-span-2 mt-sm mb-xs">
+<h3 class="font-label-lg text-on-surface border-b border-outline-variant pb-2">Emergency Contact</h3>
+</div>
+<div>
+<label class="font-label-md clinical-label">Contact Name *</label>
+<input class="font-body-md clinical-input" placeholder="Full Name" type="text"/>
+</div>
+<div>
+<label class="font-label-md clinical-label">Relationship *</label>
+<select class="font-body-md clinical-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2343474d%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_12px_center] pr-10">
+<option disabled="" selected="" value="">Select Relationship</option>
+<option>Spouse</option>
+<option>Parent</option>
+<option>Sibling</option>
+<option>Child</option>
+<option>Other</option>
+</select>
+</div>
+<div class="md:col-span-2">
+<label class="font-label-md clinical-label">Emergency Phone *</label>
+<input class="font-body-md clinical-input md:w-[calc(50%-0.5rem)]" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+</div>
+</div>
+<!-- Action Bar / Footer -->
+<div class="bg-surface-container-low p-md flex items-center justify-end gap-md">
+<button class="px-xl py-2 rounded-lg font-label-lg text-primary hover:bg-surface-container-high transition-colors" type="button">
+                            Cancel
+                        </button>
+<button class="bg-primary hover:bg-on-primary-fixed-variant text-on-primary px-xl py-2 rounded-lg font-label-lg transition-colors shadow-sm flex items-center gap-xs" type="submit">
+<span class="material-symbols-outlined text-[20px]" data-icon="save">save</span>
+                            Save Record
+                        </button>
+</div>
+</form>
+</div>
+<!-- Padding for bottom -->
+<div class="h-xl"></div>
+</main>
+</div>
+</body></html>

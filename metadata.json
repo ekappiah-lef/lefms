@@ -1,0 +1,6 @@
+{
+  "name": "Enterprise Operations Dashboard",
+  "description": "A modern web-based operational command center pilot featuring Maintenance Operations and scalable department modules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
