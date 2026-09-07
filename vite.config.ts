@@ -18,5 +18,10 @@ export default defineConfig(() => {
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    test: {
+      // Only the frontend's own tests   server/ has its own suite run via
+      // `node --test` (different runner, different `test` import source).
+      include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    },
   };
 });

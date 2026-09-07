@@ -1,0 +1,139 @@
+name: LEF MS CD
+
+# Runs only after "LEF MS CI" succeeds on main (lint + tests + build +
+# Docker build-check all passed). Builds & pushes both images to GHCR
+# tagged with the commit SHA, then SSHes into the deploy server to pull
+# and run them via docker-compose.yml   the server never needs the
+# source repo built on it, just the compose file and a git checkout for
+# that file (and database/schema.sql, mounted into the db service).
+#
+# Required repo secrets (Settings -> Secrets and variables -> Actions):
+#   DEPLOY_HOST       server hostname or IP
+#   DEPLOY_USER       SSH user (e.g. ubuntu)
+#   DEPLOY_SSH_KEY    private key matching a public key on the server
+#   DEPLOY_PATH       absolute path to the git checkout on the server
+#                      (e.g. /home/ubuntu/lefms)
+#   DEPLOY_PORT       SSH port, only needed if not 22
+#   HEALTH_CHECK_URL  a URL the deployed app should answer 200 on
+#                      (e.g. https://your-domain.example or
+#                      http://localhost/api/health if no domain yet)
+#   DB_ROOT_PASSWORD, DB_PASSWORD, JWT_SECRET, SMS_API_KEY, SMS_SENDER_ID
+#                      same values as your server's .env   only needed
+#                      once (see the "first-time server setup" note
+#                      below); GitHub Actions never reads them for
+#                      anything other than optionally seeding that file.
+on:
+  workflow_run:
+    workflows: ["LEF MS CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {} # manual "Run workflow" button, e.g. to redeploy without a new commit
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    name: Build & push images
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+      repo_lc: ${{ steps.vars.outputs.repo_lc }}
+    steps:
+      # workflow_run doesn't auto-checkout the commit CI just validated
+      # (it defaults to main's current tip)   pin explicitly, or a commit
+      # landing between CI finishing and CD starting would silently ship
+      # something CI never actually tested.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Compute image tag and repo name
+        id: vars
+        run: |
+          echo "image_tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "repo_lc=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Path-style tags (ghcr.io/<owner>/<repo>/backend) so REGISTRY in
+      # docker-compose.yml (ghcr.io/<owner>/<repo>) plus its own
+      # `/backend` and `/frontend` suffixes resolve to exactly these.
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.vars.outputs.repo_lc }}/backend:${{ steps.vars.outputs.image_tag }}
+            ghcr.io/${{ steps.vars.outputs.repo_lc }}/backend:latest
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          build-args: VITE_API_URL=/api
+          tags: |
+            ghcr.io/${{ steps.vars.outputs.repo_lc }}/frontend:${{ steps.vars.outputs.image_tag }}
+            ghcr.io/${{ steps.vars.outputs.repo_lc }}/frontend:latest
+
+  deploy:
+    name: Deploy & health-check (rollback on failure)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          REGISTRY: ghcr.io/${{ needs.build-and-push.outputs.repo_lc }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          envs: IMAGE_TAG,REGISTRY,GHCR_USER,GHCR_TOKEN,HEALTH_CHECK_URL
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            PREV_TAG=$(cat .deployed_tag 2>/dev/null || echo "latest")
+            echo "Currently deployed tag: $PREV_TAG"
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            echo "Pulling and deploying tag: $IMAGE_TAG"
+            docker compose pull
+            docker compose up -d
+
+            echo "Waiting for the app to come up..."
+            sleep 8
+
+            if curl --fail --silent --show-error "$HEALTH_CHECK_URL"; then
+              echo "$IMAGE_TAG" > .deployed_tag
+              echo "Deployment healthy   tag $IMAGE_TAG recorded."
+            else
+              echo "Health check failed. Rolling back to $PREV_TAG"
+              export IMAGE_TAG="$PREV_TAG"
+              docker compose up -d
+              echo "Rolled back to $PREV_TAG"
+              exit 1
+            fi
