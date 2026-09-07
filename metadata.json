@@ -1,6 +1,5 @@
 {
-  "name": "Enterprise Operations Dashboard",
-  "description": "A modern web-based operational command center pilot featuring Maintenance Operations and scalable department modules.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "name": "LEF MS",
+  "description": "A Work Order / Ticketing Management platform for power, passive infrastructure, AC/cooling and data-centre operations   Corrective, Preventive and Planned Maintenance work orders, each with a mandatory linked EHS record and full spare-parts request traceability.",
+  "requestFramePermissions": []
 }

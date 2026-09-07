@@ -1,138 +1,59 @@
 // =====================================================================
-// PLATFORM CONFIG — modules, navigation, roles & permissions
-// One place to define every route, which nav group it lives in, and
-// which roles may see it. Sidebar + routing + access all read from here.
+// PLATFORM CONFIG   modules, navigation & role access.
+// Six roles: Administrator, Supervisor, Engineer, EHS User, Spare User,
+// MS User (read-only). Work is scoped by Region/Site, not department   a
+// Supervisor/Engineer's default queue is their own region (server-side);
+// Administrator, EHS User, Spare User and MS User see everything.
+// No icons anywhere here   the sidebar renders labels only.
 // =====================================================================
-import {
-  LayoutDashboard, UserPlus, CalendarClock, Stethoscope, ListOrdered,
-  LogIn, LogOut, BedDouble, Building2, HeartPulse, UserRound, Scissors,
-  FlaskConical, Pill, Wrench, ClipboardList, CalendarCheck, ShieldCheck,
-  Boxes, HardHat, Smartphone, Users2, CalendarDays, CalendarRange,
-  PlaneTakeoff, Package, ShoppingCart, Wallet, BarChart3, FileBarChart,
-  UsersRound, KeyRound, Network, SlidersHorizontal, FileText, ScanLine,
-} from 'lucide-react';
+export const ROLES = ['Administrator', 'Supervisor', 'Engineer', 'EHS User', 'Spare User', 'MS User'];
 
-// ---------------------------------------------------------------------
-// ROLES
-// ---------------------------------------------------------------------
-export const ROLES = [
-  'Hospital Administrator', 'Medical Director', 'Front Desk Officer', 'OPD Officer',
-  'Doctor', 'Nurse', 'Ward Manager', 'HR Officer', 'Maintenance Manager',
-  'Engineer', 'Biomedical Engineer', 'Pharmacist', 'Lab Scientist',
-  'Inventory Officer', 'Finance Officer', 'Department Head', 'System Administrator',
-];
-
-const ADMIN = ['Hospital Administrator', 'System Administrator'];
-
-export const EXECUTIVE_ROLES = ['Hospital Administrator', 'Medical Director', 'Department Head', 'System Administrator'];
-export const FIELD_ROLES = ['Engineer', 'Biomedical Engineer'];
-
-// ---------------------------------------------------------------------
-// MODULE REGISTRY
-// ---------------------------------------------------------------------
 export const MODULES = [
-  { id: 'dashboard', label: 'Dashboard', group: 'Overview', icon: LayoutDashboard, roles: '*' },
+  { id: 'dashboard', label: 'Dashboard', group: 'Overview', roles: '*', page: 'overview' },
 
-  // Patient Services
-  { id: 'front-desk',   label: 'Front Desk',         group: 'Patient Services', icon: UserPlus,      roles: [...ADMIN, 'Front Desk Officer', 'Medical Director'] },
-  { id: 'appointments', label: 'Appointments',       group: 'Patient Services', icon: CalendarClock, roles: [...ADMIN, 'Front Desk Officer', 'OPD Officer', 'Doctor', 'Medical Director'] },
-  { id: 'opd',          label: 'OPD / Patient Flow', group: 'Patient Services', icon: Stethoscope,   roles: [...ADMIN, 'OPD Officer', 'Doctor', 'Medical Director'] },
-  { id: 'patient-queue',label: 'Patient Queue',      group: 'Patient Services', icon: ListOrdered,   roles: [...ADMIN, 'OPD Officer', 'Doctor', 'Front Desk Officer', 'Nurse', 'Medical Director'] },
-  { id: 'admissions',   label: 'Admissions',         group: 'Patient Services', icon: LogIn,         roles: [...ADMIN, 'OPD Officer', 'Ward Manager', 'Nurse', 'Doctor', 'Medical Director'] },
-  { id: 'discharges',   label: 'Discharges',         group: 'Patient Services', icon: LogOut,        roles: [...ADMIN, 'OPD Officer', 'Ward Manager', 'Nurse', 'Doctor', 'Medical Director'] },
+  { id: 'trouble-tickets', label: 'Trouble Tickets', group: 'Trouble Tickets', roles: '*', page: 'trouble-tickets' },
 
-  // Clinical Operations
-  { id: 'wards',        label: 'Wards',          group: 'Clinical Operations', icon: Building2,    roles: [...ADMIN, 'Nurse', 'Ward Manager', 'Doctor', 'Medical Director'] },
-  { id: 'bed-mgmt',     label: 'Bed Management', group: 'Clinical Operations', icon: BedDouble,    roles: [...ADMIN, 'Nurse', 'Ward Manager', 'OPD Officer', 'Medical Director'] },
-  { id: 'nursing',      label: 'Nursing',        group: 'Clinical Operations', icon: HeartPulse,  roles: [...ADMIN, 'Nurse', 'Ward Manager', 'Medical Director'] },
-  { id: 'doctors',      label: 'Doctors',        group: 'Clinical Operations', icon: UserRound,   roles: [...ADMIN, 'Doctor', 'Medical Director'] },
-  { id: 'theatre',      label: 'Theatre',        group: 'Clinical Operations', icon: Scissors,    roles: [...ADMIN, 'Doctor', 'Nurse', 'Medical Director'] },
-  { id: 'laboratory',   label: 'Laboratory',     group: 'Clinical Operations', icon: FlaskConical, roles: [...ADMIN, 'Lab Scientist', 'Doctor', 'Medical Director'] },
-  { id: 'pharmacy',     label: 'Pharmacy',       group: 'Clinical Operations', icon: Pill,        roles: [...ADMIN, 'Pharmacist', 'Doctor', 'Medical Director'] },
+  { id: 'work-orders', label: 'All Work Orders', group: 'Work Orders', roles: '*', page: 'work-orders' },
+  { id: 'reports', label: 'Reports', group: 'Work Orders', roles: '*', page: 'reports' },
 
-  // Facility Operations
-  { id: 'requests',     label: 'Maintenance Requests',   group: 'Facility Operations', icon: ClipboardList, roles: [...ADMIN, 'Maintenance Manager', 'Engineer', 'Biomedical Engineer', 'Front Desk Officer', 'Nurse', 'Ward Manager', 'OPD Officer', 'Pharmacist', 'Lab Scientist'] },
-  { id: 'work-orders',  label: 'Work Orders',            group: 'Facility Operations', icon: Wrench,        roles: [...ADMIN, 'Maintenance Manager', 'Engineer', 'Biomedical Engineer'] },
-  { id: 'preventive',   label: 'Preventive Maintenance', group: 'Facility Operations', icon: CalendarCheck, roles: [...ADMIN, 'Maintenance Manager', 'Engineer', 'Biomedical Engineer'] },
-  { id: 'safety',       label: 'Safety Audits',          group: 'Facility Operations', icon: ShieldCheck,   roles: [...ADMIN, 'Maintenance Manager', 'Engineer', 'Biomedical Engineer'] },
-  { id: 'assets',       label: 'Assets',                 group: 'Facility Operations', icon: Boxes,         roles: [...ADMIN, 'Maintenance Manager', 'Biomedical Engineer'] },
-  { id: 'biomedical',   label: 'Biomedical',             group: 'Facility Operations', icon: ScanLine,      roles: [...ADMIN, 'Biomedical Engineer', 'Maintenance Manager', 'Medical Director'] },
-  { id: 'engineers',    label: 'Engineers',              group: 'Facility Operations', icon: HardHat,       roles: [...ADMIN, 'Maintenance Manager'] },
-  { id: 'engineer-mobile', label: 'My Jobs (Mobile)',    group: 'Facility Operations', icon: Smartphone,    roles: ['Engineer', 'Biomedical Engineer', 'Maintenance Manager', ...ADMIN] },
+  { id: 'ehs-work-orders', label: 'EHS Work Orders', group: 'EHS', roles: ['Administrator', 'EHS User', 'Engineer', 'Supervisor', 'MS User'], page: 'ehs-work-orders' },
+  { id: 'ehs-reports', label: 'EHS Reports', group: 'EHS', roles: ['Administrator', 'EHS User', 'MS User'], page: 'ehs-reports' },
 
-  // Administration
-  { id: 'patient-records', label: 'Patient Records', group: 'Administration', icon: FileText,     roles: [...ADMIN, 'Medical Director', 'HR Officer', 'Front Desk Officer', 'OPD Officer', 'Doctor', 'Nurse', 'Ward Manager'] },
-  { id: 'hr',            label: 'Human Resources',  group: 'Administration', icon: Users2,        roles: [...ADMIN, 'HR Officer'] },
-  { id: 'attendance',    label: 'Staff Attendance', group: 'Administration', icon: CalendarDays,  roles: [...ADMIN, 'HR Officer'] },
-  { id: 'shifts',        label: 'Shift Management', group: 'Administration', icon: CalendarRange, roles: [...ADMIN, 'HR Officer', 'Ward Manager'] },
-  { id: 'leave',         label: 'Leave Management', group: 'Administration', icon: PlaneTakeoff,  roles: [...ADMIN, 'HR Officer'] },
-  { id: 'inventory',     label: 'Inventory',        group: 'Administration', icon: Package,       roles: [...ADMIN, 'Inventory Officer', 'Pharmacist'] },
-  { id: 'procurement',   label: 'Procurement',      group: 'Administration', icon: ShoppingCart,  roles: [...ADMIN, 'Inventory Officer', 'Finance Officer'] },
-  { id: 'finance',       label: 'Finance',          group: 'Administration', icon: Wallet,        roles: [...ADMIN, 'Finance Officer'] },
+  { id: 'spare-requests', label: 'Spare Requests', group: 'Spare Parts', roles: ['Administrator', 'Spare User', 'Engineer', 'Supervisor', 'MS User'], page: 'spare-requests' },
+  { id: 'spare-transactions', label: 'Spare Returns', group: 'Spare Parts', roles: ['Administrator', 'Spare User', 'MS User'], page: 'spare-transactions' },
+  { id: 'spare-inventory', label: 'Add / Update Inventory', group: 'Spare Parts', roles: ['Administrator', 'Spare User'], page: 'spare-inventory' },
+  { id: 'spare-reports', label: 'Spare Reports', group: 'Spare Parts', roles: ['Administrator', 'Spare User', 'MS User'], page: 'spare-reports' },
 
-  // Reports
-  { id: 'hospital-reports',    label: 'Hospital Reports',    group: 'Reports', icon: BarChart3,    roles: [...ADMIN, 'Medical Director', 'Department Head'] },
-  { id: 'maintenance-reports', label: 'Maintenance Reports', group: 'Reports', icon: FileBarChart, roles: [...ADMIN, 'Maintenance Manager'] },
-  { id: 'hr-reports',          label: 'HR Reports',          group: 'Reports', icon: FileBarChart, roles: [...ADMIN, 'HR Officer'] },
+  { id: 'site-database', label: 'Sites', group: 'Site Database', roles: ['Administrator', 'MS User'], page: 'site-database' },
+  { id: 'assets', label: 'Assets', group: 'Site Database', roles: '*', page: 'assets' },
 
-  // System
-  { id: 'sys-users',       label: 'Users',       group: 'System', icon: UsersRound,        roles: ADMIN },
-  { id: 'sys-roles',       label: 'Roles',       group: 'System', icon: KeyRound,          roles: ADMIN },
-  { id: 'sys-departments', label: 'Departments', group: 'System', icon: Network,           roles: ADMIN },
-  { id: 'sys-permissions', label: 'Permissions', group: 'System', icon: ShieldCheck,       roles: ADMIN },
-  { id: 'settings',        label: 'Settings',    group: 'System', icon: SlidersHorizontal, roles: '*' },
+  { id: 'admin-users', label: 'Users', group: 'Administration', roles: ['Administrator'], page: 'admin-users' },
+  { id: 'admin-wo-checklist', label: 'PM Checklist', group: 'Administration', roles: ['Administrator'], page: 'admin-wo-checklist' },
+  { id: 'admin-ehs-checklist', label: 'EHS Checklist', group: 'Administration', roles: ['Administrator', 'EHS User'], page: 'admin-ehs-checklist' },
+  { id: 'admin-sms-groups', label: 'SMS Groups', group: 'Administration', roles: ['Administrator'], page: 'admin-sms-groups' },
+  { id: 'admin-sms-config', label: 'SMS Config', group: 'Administration', roles: ['Administrator'], page: 'admin-sms-config' },
 ];
 
-export const NAV_GROUP_ORDER = [
-  'Overview', 'Patient Services', 'Clinical Operations',
-  'Facility Operations', 'Administration', 'Reports', 'System',
-];
+export const NAV_GROUP_ORDER = ['Trouble Tickets', 'Work Orders', 'EHS', 'Spare Parts', 'Site Database', 'Administration'];
 
-// ---------------------------------------------------------------------
-// ACCESS HELPERS
-// ---------------------------------------------------------------------
-export function canAccess(role, moduleId) {
+// user: { role }
+export function canAccess(user, moduleId) {
   const m = MODULES.find((x) => x.id === moduleId);
   if (!m) return false;
+  if (user.role === 'Administrator') return true;
   if (m.roles === '*') return true;
-  return m.roles.includes(role);
+  return m.roles.includes(user.role);
 }
 
 export function moduleById(id) {
   return MODULES.find((x) => x.id === id);
 }
 
-export function navForRole(role) {
+export function navForRole(user) {
   const groups = {};
   MODULES.forEach((m) => {
     if (m.id === 'dashboard') return;
-    if (m.roles === '*' || m.roles.includes(role)) {
-      (groups[m.group] = groups[m.group] || []).push(m);
-    }
+    if (canAccess(user, m.id)) (groups[m.group] = groups[m.group] || []).push(m);
   });
-  return NAV_GROUP_ORDER
-    .filter((g) => g !== 'Overview' && groups[g])
-    .map((g) => ({ group: g, items: groups[g] }));
-}
-
-// Department dashboard / landing that a role lands on.
-export const ROLE_DASHBOARD = {
-  'Front Desk Officer': 'front-desk',
-  'OPD Officer': 'opd',
-  'Doctor': 'opd',
-  'Nurse': 'ward',
-  'Ward Manager': 'ward',
-  'HR Officer': 'hr',
-  'Maintenance Manager': 'maintenance',
-  'Engineer': 'engineer-mobile',
-  'Biomedical Engineer': 'biomedical',
-  'Pharmacist': 'pharmacy',
-  'Lab Scientist': 'laboratory',
-  'Inventory Officer': 'inventory',
-  'Finance Officer': 'finance',
-};
-
-export function landingDashboard(role) {
-  if (EXECUTIVE_ROLES.includes(role)) return 'general';
-  return ROLE_DASHBOARD[role] || 'general';
+  return NAV_GROUP_ORDER.filter((g) => groups[g]).map((g) => ({ group: g, items: groups[g] }));
 }

@@ -1,0 +1,75 @@
+# Local: `docker compose up --build` builds everything from source.
+# CI/CD: build + push the `backend`/`frontend` images to a registry (set
+#        REGISTRY/TAG), then on the target server just `docker compose pull
+#        && docker compose up -d`   no source checkout needed there.
+#
+# Copy .env.example to .env first and fill in real values.
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${DB_NAME:-lefms}
+      MYSQL_USER: ${DB_USER:-lefms}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - db_data:/var/lib/mysql
+      # Pure DDL, no seed data   only runs on a genuinely fresh volume.
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [lefms]
+
+  backend:
+    build:
+      context: ./server
+    image: ${REGISTRY:-lefms}/backend:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-lefms}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      DB_NAME: ${DB_NAME:-lefms}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      PORT: 4000
+      SMS_API_KEY: ${SMS_API_KEY:-}
+      SMS_SENDER_ID: ${SMS_SENDER_ID:-}
+    volumes:
+      - uploads_data:/app/uploads
+    networks: [lefms]
+    # No published port   only the frontend's nginx (which proxies /api
+    # and /uploads to this service over the internal network) is public.
+    # Uncomment to reach the API directly (debugging, or if you're not
+    # routing through nginx):
+    # ports:
+    #   - "4000:4000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+    image: ${REGISTRY:-lefms}/frontend:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks: [lefms]
+
+networks:
+  lefms:
+
+volumes:
+  db_data:
+  uploads_data:

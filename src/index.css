@@ -1,20 +1,47 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------
-   Clinical Precision design tokens
-   Deep navy sidebar/headings, amber-gold accent, cool-gray surface
+   Design tokens   indigo/violet accent, light surfaces.
+   Raw HSL triplets (shadcn convention, no hsl() wrapper) live on
+   :root so both `hsl(var(--primary))` in JS/inline-styles AND the
+   Tailwind utility classes generated below work off one source.
    --------------------------------------------------------------- */
 :root {
-  --navy: #0b1c30;          /* sidebar / primary surfaces */
-  --navy-800: #182f49;
-  --amber: #febb06;         /* accent / pending */
-  --surface: #f8f9ff;       /* app canvas */
+  --primary: 243 75% 59%;              /* indigo-600 */
+  --primary-foreground: 0 0% 100%;
+  --background: 240 20% 99%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --muted: 220 20% 96%;
+  --muted-foreground: 220 9% 46%;
+  --border: 220 20% 91%;
+  --accent: 244 70% 96%;
+  --accent-foreground: 243 75% 40%;
+  --radius: 0.75rem;
+
+  --surface: #f8f9ff;                  /* app canvas (legacy alias, still used a few places) */
+}
+
+@theme inline {
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-border: hsl(var(--border));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --radius-lg: var(--radius);
 }
 
 html, body {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   background: var(--surface);
-  color: #0b1c30;
+  color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
 }
 
@@ -28,7 +55,7 @@ table td, table th, .tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/* thin scrollbars in the navy sidebar */
+/* thin scrollbars */
 .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #33415580; border-radius: 9999px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #c7cede; border-radius: 9999px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }

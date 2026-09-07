@@ -1,4 +1,4 @@
-// MySQL connection pool (mysql2/promise) — points at your XAMPP MySQL.
+// MySQL connection pool (mysql2/promise)   points at your XAMPP MySQL.
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -8,7 +8,7 @@ export const pool = mysql.createPool({
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'meridian_hms',
+  database: process.env.DB_NAME || 'lefms',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

@@ -6,3 +6,15 @@ coverage/
 *.log
 .env*
 !.env.example
+
+
+.claude/
+
+
+server/uploads/*
+!server/uploads/.gitkeep
+
+
+/Dashboard Login*.jpg
+/backgroundlogin.jpg
+/whitelogo.png

@@ -1,99 +1,133 @@
-import React, { useState } from 'react';
-import { Boxes, Wrench, CheckCircle2, AlertTriangle, Ticket, Plus, Eye } from 'lucide-react';
-import { PageHeader, KpiGrid, Kpi, FilterBar, Select, Table, Td, Tr, Badge, Modal, Button, Field, IconBtn, RowActions, DeleteBtn } from '../components/ui';
-import { ASSET_STATUSES } from '../data/extraData';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Boxes, CheckCircle2, Wrench, XCircle, Plus } from 'lucide-react';
+import { PageHeader, KpiGrid, Kpi, FilterBar, Select, Table, Td, Tr, Badge, Modal, Button, Field, Pagination, pageSlice } from '../components/ui';
+import { api } from '../api/client';
 
-const ASSET_CATEGORIES = ['Power', 'Building', 'Fleet', 'Biomedical', 'Pharmacy', 'HVAC', 'IT', 'Furniture'];
+const STATUSES = ['Operational', 'Under Maintenance', 'Out of Service', 'Retired'];
+const STATUS_TONE = { Operational: 'green', 'Under Maintenance': 'amber', 'Out of Service': 'red', Retired: 'slate' };
+const CATEGORIES = ['Generator', 'AC'];
 
-export default function Assets({ store }) {
-  const { assets, setAssets, setRequests, go } = store;
+export default function Assets({ user }) {
+  const [rows, setRows] = useState([]);
+  const [sites, setSites] = useState([]);
+  const [site, setSite] = useState('');
   const [status, setStatus] = useState('');
-  const [category, setCategory] = useState('');
-  const [sel, setSel] = useState(null);
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState(null);
   const [showNew, setShowNew] = useState(false);
-  const cats = [...new Set(assets.map((a) => a.category))];
-  const rows = assets.filter((a) => (!status || a.status === status) && (!category || a.category === category));
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const canManage = user.role === 'Administrator' || user.role === 'Supervisor';
 
-  const raiseTicket = (a) => {
-    const id = 'MR-2026-0' + Math.floor(15 + Math.random() * 80);
-    setRequests((prev) => [{ id, dept: 'Biomedical', location: a.location, room: a.location, bed: '', equipment: a.name, category: a.category === 'Biomedical' ? 'Biomedical' : 'Mechanical', priority: 'High', reporter: 'Asset Register', date: '2026-07-19 12:00', status: 'Submitted', description: `Fault reported on asset ${a.tag}`, assignedTo: '' }, ...prev]);
-    setAssets((prev) => prev.map((x) => x.id === a.id ? { ...x, status: 'Under Maintenance', linkedWO: id } : x));
-    setSel(null);
-    go('requests');
-  };
+  const refresh = useCallback(() => {
+    setLoading(true);
+    api.assets.list({ ...(site ? { site } : {}), ...(status ? { status } : {}) }).then(setRows).finally(() => setLoading(false));
+  }, [site, status]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { api.sites.list().then(setSites); }, []);
+  useEffect(() => { setPage(1); }, [site, status, search]);
+
+  const filtered = rows.filter((a) => !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.tag.toLowerCase().includes(search.toLowerCase()));
+  const pageRows = pageSlice(filtered, page);
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Assets" subtitle="Asset & equipment register, warranty & linked work orders"
-        actions={<Button icon={Plus} onClick={() => setShowNew(true)}>Add Asset</Button>} />
+      <PageHeader title="Assets" subtitle="Equipment register across every site"
+        actions={canManage && <Button icon={Plus} onClick={() => setShowNew(true)}>New Asset</Button>} />
 
       <KpiGrid cols={4}>
-        <Kpi title="Total Assets" value={assets.length} icon={Boxes} tone="slate" />
-        <Kpi title="Operational" value={assets.filter((a) => a.status === 'Operational').length} icon={CheckCircle2} tone="green" />
-        <Kpi title="Under Maintenance" value={assets.filter((a) => a.status === 'Under Maintenance').length} icon={Wrench} tone="amber" />
-        <Kpi title="Out of Service" value={assets.filter((a) => a.status === 'Out of Service').length} icon={AlertTriangle} tone="red" />
+        <Kpi title="Total Assets" value={rows.length} icon={Boxes} />
+        <Kpi title="Operational" value={rows.filter((a) => a.status === 'Operational').length} icon={CheckCircle2} />
+        <Kpi title="Under Maintenance" value={rows.filter((a) => a.status === 'Under Maintenance').length} icon={Wrench} />
+        <Kpi title="Out of Service" value={rows.filter((a) => a.status === 'Out of Service').length} icon={XCircle} tone="rose" />
       </KpiGrid>
 
-      <FilterBar>
-        <Select value={category} onChange={setCategory} options={cats} label="All categories" />
-        <Select value={status} onChange={setStatus} options={ASSET_STATUSES} label="All statuses" />
+      <FilterBar search={search} onSearch={setSearch} placeholder="Search asset…">
+        <Select className="w-52" value={site} onChange={setSite} options={sites.map((s) => ({ value: String(s.id), label: `${s.siteCode}   ${s.name}` }))} label="All sites" />
+        <Select className="w-44" value={status} onChange={setStatus} options={STATUSES} label="All statuses" />
       </FilterBar>
 
-      <Table headers={['Tag', 'Asset', 'Category', 'Location', 'Warranty', 'Linked WO', 'Status', 'Actions']}>
-        {rows.map((a) => (
-          <Tr key={a.id} onClick={() => setSel(a)}>
+      <Table headers={['Tag', 'Name', 'Category', 'Site', 'Manufacturer', 'Calibration Due', 'Status']} empty={loading ? 'Loading…' : 'No assets found'}>
+        {pageRows.map((a) => (
+          <Tr key={a.id} onClick={() => setSelected(a)}>
             <Td className="font-semibold text-slate-800">{a.tag}</Td>
             <Td className="font-medium">{a.name}</Td>
             <Td>{a.category}</Td>
-            <Td>{a.location}</Td>
-            <Td>{a.warranty}</Td>
-            <Td>{a.linkedWO || '—'}</Td>
-            <Td><Badge value={a.status === 'Operational' ? 'Active' : a.status === 'Under Maintenance' ? 'In Progress' : 'Overdue'}>{a.status}</Badge></Td>
-            <Td onClick={(e) => e.stopPropagation()}>
-              <RowActions>
-                <IconBtn icon={Eye} title="View" onClick={() => setSel(a)} />
-                <DeleteBtn onDelete={() => setAssets((prev) => prev.filter((x) => x.id !== a.id))} />
-              </RowActions>
-            </Td>
+            <Td>{a.siteCode}   {a.siteName}</Td>
+            <Td>{a.manufacturer || ' '}</Td>
+            <Td>{a.calibrationDueDate ? (a.calibrationDueDate.slice ? a.calibrationDueDate.slice(0, 10) : a.calibrationDueDate) : ' '}</Td>
+            <Td><Badge tone={STATUS_TONE[a.status]}>{a.status}</Badge></Td>
           </Tr>
         ))}
       </Table>
+      <Pagination page={page} setPage={setPage} total={filtered.length} />
 
-      <Modal open={!!sel} onClose={() => setSel(null)} title={sel?.name} subtitle={sel ? `${sel.tag} · ${sel.category}` : ''}
-        footer={sel && (<><Button variant="ghost" onClick={() => setSel(null)}>Close</Button>{sel.linkedWO ? <Button onClick={() => { setSel(null); go('work-orders'); }}>Open Work Order</Button> : <Button variant="danger" icon={Ticket} onClick={() => raiseTicket(sel)}>Report Fault</Button>}</>)}>
-        {sel && (
+      {selected && (
+        <Modal open onClose={() => setSelected(null)} title={selected.name} subtitle={`${selected.tag} · ${selected.category}`}
+          footer={<Button variant="ghost" onClick={() => setSelected(null)}>Close</Button>}>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Status" value={<Badge value={sel.status === 'Operational' ? 'Active' : 'In Progress'}>{sel.status}</Badge>} />
-            <Field label="Location" value={sel.location} />
-            <Field label="Category" value={sel.category} />
-            <Field label="Vendor" value={sel.vendor} />
-            <Field label="Warranty Expiry" value={sel.warranty} />
-            <Field label="Linked Work Order" value={sel.linkedWO || '—'} />
+            <Field label="Site" value={`${selected.siteCode}   ${selected.siteName}`} />
+            <Field label="Manufacturer" value={selected.manufacturer} />
+            <Field label="Model" value={selected.model} />
+            <Field label="Serial No." value={selected.serialNo} />
+            <Field label="Calibration Due" value={selected.calibrationDueDate ? (selected.calibrationDueDate.slice ? selected.calibrationDueDate.slice(0, 10) : selected.calibrationDueDate) : ' '} />
+            <Field label="Warranty Expiry" value={selected.warrantyExpiry ? (selected.warrantyExpiry.slice ? selected.warrantyExpiry.slice(0, 10) : selected.warrantyExpiry) : ' '} />
           </div>
-        )}
-      </Modal>
+          {canManage && (
+            <div className="mt-5 pt-5 border-t border-slate-100">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Update Status</label>
+              <div className="mt-2 flex items-center gap-3">
+                <Badge tone={STATUS_TONE[selected.status]}>{selected.status}</Badge>
+                <span className="text-slate-300">→</span>
+                <div className="flex-1 max-w-[220px]">
+                  <Select value={selected.status} onChange={(v) => api.assets.update(selected.id, { status: v }).then(() => { refresh(); setSelected((s) => ({ ...s, status: v })); })} options={STATUSES} />
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
 
-      <NewAsset open={showNew} onClose={() => setShowNew(false)} onSave={(a) => { setAssets((prev) => [a, ...prev]); setShowNew(false); }} />
+      {showNew && <NewAsset sites={sites} onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); refresh(); }} />}
     </div>
   );
 }
 
-function NewAsset({ open, onClose, onSave }) {
-  const [f, setF] = useState({ tag: '', name: '', category: ASSET_CATEGORIES[0], location: '', status: 'Operational', warranty: '', vendor: '' });
+function NewAsset({ sites, onClose, onCreated }) {
+  const [f, setF] = useState({ tag: '', name: '', category: CATEGORIES[0], siteId: '', manufacturer: '', model: '', serialNo: '', calibrationDueDate: '', warrantyExpiry: '' });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
   const set = (k) => (v) => setF((s) => ({ ...s, [k]: v }));
-  const save = () => onSave({ id: 'AST-' + Math.floor(7 + Math.random() * 900), tag: f.tag || 'TBH-AST-' + Math.floor(10 + Math.random() * 90), name: f.name, category: f.category, location: f.location, status: f.status, warranty: f.warranty, vendor: f.vendor, linkedWO: '' });
-  const input = (label, k, full) => (<div className={full ? 'col-span-2' : ''}><label className="text-[11px] font-semibold text-slate-600">{label}</label><input value={f[k]} onChange={(e) => set(k)(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0b1c30]" /></div>);
+  const canSave = f.tag && f.name && f.category && f.siteId;
+
+  const save = async () => {
+    setBusy(true); setError('');
+    try {
+      await api.assets.create({ ...f, siteId: Number(f.siteId) });
+      onCreated();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <Modal open={open} onClose={onClose} title="Add Asset" width="max-w-2xl"
-      footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={!f.name}>Add Asset</Button></>}>
+    <Modal open onClose={onClose} title="New Asset" subtitle="Register a new asset"
+      footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={!canSave || busy}>{busy ? 'Creating…' : 'Create Asset'}</Button></>}>
+      {error && <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>}
       <div className="grid grid-cols-2 gap-3">
-        {input('Asset Name', 'name', true)}
-        {input('Asset Tag', 'tag')}
-        <div><label className="text-[11px] font-semibold text-slate-600">Category</label><div className="mt-1"><Select value={f.category} onChange={set('category')} options={ASSET_CATEGORIES} /></div></div>
-        {input('Location', 'location')}
-        <div><label className="text-[11px] font-semibold text-slate-600">Status</label><div className="mt-1"><Select value={f.status} onChange={set('status')} options={ASSET_STATUSES} /></div></div>
-        {input('Warranty Expiry', 'warranty')}
-        {input('Vendor', 'vendor', true)}
+        <div><label className="text-[11px] font-semibold text-slate-600">Asset Tag</label><input value={f.tag} onChange={(e) => set('tag')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
+        <div><label className="text-[11px] font-semibold text-slate-600">Name</label><input value={f.name} onChange={(e) => set('name')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
+        <div><label className="text-[11px] font-semibold text-slate-600">Category</label><div className="mt-1"><Select value={f.category} onChange={set('category')} options={CATEGORIES} /></div></div>
+        <div><label className="text-[11px] font-semibold text-slate-600">Site</label><div className="mt-1"><Select value={f.siteId} onChange={set('siteId')} options={sites.map((s) => ({ value: String(s.id), label: `${s.siteCode}   ${s.name}` }))} label="Select site" /></div></div>
+        <div><label className="text-[11px] font-semibold text-slate-600">Manufacturer</label><input value={f.manufacturer} onChange={(e) => set('manufacturer')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
+        <div><label className="text-[11px] font-semibold text-slate-600">Model</label><input value={f.model} onChange={(e) => set('model')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
+        <div><label className="text-[11px] font-semibold text-slate-600">Serial No.</label><input value={f.serialNo} onChange={(e) => set('serialNo')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
+        <div><label className="text-[11px] font-semibold text-slate-600">Calibration Due</label><input type="date" value={f.calibrationDueDate} onChange={(e) => set('calibrationDueDate')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
+        <div><label className="text-[11px] font-semibold text-slate-600">Warranty Expiry</label><input type="date" value={f.warrantyExpiry} onChange={(e) => set('warrantyExpiry')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
       </div>
     </Modal>
   );

@@ -1,0 +1,26 @@
+node_modules
+dist
+build
+coverage
+.git
+.gitignore
+.claude
+*.log
+.env
+.env.*
+!.env.example
+
+# Backend has its own image/context   not needed to build the frontend.
+server
+
+# Not used by the app itself (see src/assets/ for what actually ships).
+Dashboard Login*.jpg
+backgroundlogin.jpg
+whitelogo.png
+database
+mockup
+assets
+
+Dockerfile
+.dockerignore
+docker-compose*.yml
