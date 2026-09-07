@@ -1,6 +1,4 @@
-# LEF MS frontend   Vite/React SPA, built to static files and served by
-# nginx (which also reverse-proxies /api and /uploads to the backend
-# container, so the browser only ever talks to one origin).
+
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
@@ -17,4 +15,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost/ >/dev/null || exit 1
+  CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1
