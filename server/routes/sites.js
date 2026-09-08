@@ -5,6 +5,7 @@ import multer from 'multer';
 import ExcelJS from 'exceljs';
 import { pool } from '../db.js';
 import { authorize, scopeRegion } from '../auth.js';
+import { sendError } from '../workflow.js';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 const router = Router();
@@ -45,7 +46,7 @@ router.post('/', authorize('Administrator'), async (req, res) => {
     res.status(201).json({ id: r.insertId });
   } catch (e) {
     if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Site ID already exists' });
-    res.status(500).json({ error: e.message });
+    sendError(res, e);
   }
 });
 
@@ -66,7 +67,7 @@ router.delete('/:id', authorize('Administrator'), async (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     if (e.code?.startsWith('ER_ROW_IS_REFERENCED')) return res.status(409).json({ error: 'This site has work orders or assets on record   deactivate it instead of deleting.' });
-    res.status(500).json({ error: e.message });
+    sendError(res, e);
   }
 });
 
@@ -156,7 +157,7 @@ router.post('/bulk-import', authorize('Administrator'), upload.single('file'), a
       await conn.commit();
     } catch (e) {
       await conn.rollback();
-      return res.status(500).json({ error: e.message });
+      return sendError(res, e);
     } finally {
       conn.release();
     }

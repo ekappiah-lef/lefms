@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { authorize, scopeRegion } from '../auth.js';
-import { applyTransition, addUpdate, reassignEngineer, getHistory, WorkflowError } from '../workflow.js';
+import { authorizeModule } from '../permissions.js';
+import { applyTransition, addUpdate, reassignEngineer, getHistory, WorkflowError, sendError } from '../workflow.js';
 import { createWorkOrderTx } from '../workOrderCreation.js';
 import { alertEngineerAssigned, alertHighCritical } from '../smsAlerts.js';
 
@@ -55,7 +56,7 @@ router.get('/:id', async (req, res) => {
   res.json({ ...shape(rows[0]), checklist, spareRequests, history });
 });
 
-router.post('/', authorize('Supervisor', 'Engineer', 'Administrator'), async (req, res) => {
+router.post('/', authorizeModule('work_orders', 'manage'), async (req, res) => {
   const b = req.body || {};
   if (!b.woType || !['CM', 'PM', 'PLM'].includes(b.woType)) return res.status(400).json({ error: 'A valid woType (CM, PM or PLM) is required' });
   if (!b.siteId || !b.title || !b.description || !b.engineerId) {
@@ -88,7 +89,7 @@ router.post('/', authorize('Supervisor', 'Engineer', 'Administrator'), async (re
     alertHighCritical({ id: woId, woNo, title: b.title, priority, regionId: site.region_id, siteName: site.name });
   } catch (e) {
     await conn.rollback();
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   } finally {
     conn.release();
   }
@@ -103,7 +104,7 @@ router.post('/:id/actions/:action', async (req, res) => {
     else result = await applyTransition('work_order', req.params.id, action, req.user, req.body?.note, { newEngineerId: req.body?.newEngineerId, checklistResponses: req.body?.checklistResponses });
     res.json(result);
   } catch (e) {
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   }
 });
 

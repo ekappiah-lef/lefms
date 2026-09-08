@@ -9,6 +9,7 @@ import PDFDocument from 'pdfkit';
 import archiver from 'archiver';
 import { pool } from '../db.js';
 import { getHistory } from '../workflow.js';
+import { authorizeModule } from '../permissions.js';
 
 const router = Router();
 
@@ -30,7 +31,7 @@ function applyFilters(sql, query) {
   return { sql: where.length ? `${sql} WHERE ${where.join(' AND ')}` : sql, params };
 }
 
-router.get('/export/excel', async (req, res) => {
+router.get('/export/excel', authorizeModule('wo_reports', 'view'), async (req, res) => {
   const { sql, params } = applyFilters(SELECT, req.query);
   const [rows] = await pool.query(sql, params);
 
@@ -266,7 +267,7 @@ async function buildTicketPdf(id) {
   return done;
 }
 
-router.get('/export/pdf/:id', async (req, res) => {
+router.get('/export/pdf/:id', authorizeModule('wo_reports', 'view'), async (req, res) => {
   const buffer = await buildTicketPdf(req.params.id);
   if (!buffer) return res.status(404).json({ error: 'Not found' });
   res.setHeader('Content-Type', 'application/pdf');
@@ -274,7 +275,7 @@ router.get('/export/pdf/:id', async (req, res) => {
   res.send(buffer);
 });
 
-router.post('/export/pdf/bulk', async (req, res) => {
+router.post('/export/pdf/bulk', authorizeModule('wo_reports', 'view'), async (req, res) => {
   const { ids } = req.body || {};
   if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'A non-empty ids array is required' });
 
@@ -291,7 +292,7 @@ router.post('/export/pdf/bulk', async (req, res) => {
 });
 
 // EHS Reports   filterable raw export of every EHS record.
-router.get('/export/ehs-excel', async (req, res) => {
+router.get('/export/ehs-excel', authorizeModule('ehs_reports', 'view'), async (req, res) => {
   const where = []; const params = [];
   if (req.query.status) { where.push('eh.status = ?'); params.push(req.query.status); }
   if (req.query.region) { where.push('w.region_id = ?'); params.push(req.query.region); }
@@ -319,8 +320,41 @@ router.get('/export/ehs-excel', async (req, res) => {
   res.end();
 });
 
+// Trouble Ticket Reports   filterable raw export of every trouble ticket,
+// including the Work Order it was converted to (if any).
+router.get('/export/tt-excel', authorizeModule('tt_reports', 'view'), async (req, res) => {
+  const where = []; const params = [];
+  if (req.query.status) { where.push('t.status = ?'); params.push(req.query.status); }
+  if (req.query.region) { where.push('t.region_id = ?'); params.push(req.query.region); }
+  if (req.query.priority) { where.push('t.priority = ?'); params.push(req.query.priority); }
+  if (req.query.from) { where.push('t.created_at >= ?'); params.push(req.query.from); }
+  if (req.query.to) { where.push('t.created_at <= ?'); params.push(req.query.to); }
+  const sql = `SELECT t.tt_no, t.title, t.site_name, t.site_code, t.region_name, t.category, t.priority, t.status,
+                      cu.full_name AS created_by, t.created_at, t.closed_at, bu.full_name AS closed_by,
+                      w.wo_no, w.status AS wo_status
+               FROM trouble_tickets t
+               JOIN users cu ON cu.id = t.created_by
+               LEFT JOIN users bu ON bu.id = t.closed_by
+               LEFT JOIN work_orders w ON w.id = t.work_order_id
+               ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY t.created_at DESC`;
+  const [rows] = await pool.query(sql, params);
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'LEF MS';
+  const sheet = workbook.addWorksheet('Trouble Tickets');
+  const columns = ['tt_no', 'title', 'site_name', 'site_code', 'region_name', 'category', 'priority', 'status', 'created_by', 'created_at', 'closed_at', 'closed_by', 'wo_no', 'wo_status'];
+  sheet.columns = columns.map((c) => ({ header: c.replace(/_/g, ' ').toUpperCase(), key: c, width: 20 }));
+  sheet.getRow(1).font = { bold: true };
+  rows.forEach((r) => sheet.addRow(r));
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="lefms-trouble-tickets-${Date.now()}.xlsx"`);
+  await workbook.xlsx.write(res);
+  res.end();
+});
+
 // Spare Reports   current inventory levels plus the full transaction ledger.
-router.get('/export/spares-excel', async (req, res) => {
+router.get('/export/spares-excel', authorizeModule('spare_reports', 'view'), async (req, res) => {
   // No unit_cost here   financials aren't shown on this report, per feedback.
   const [items] = await pool.query(`SELECT sku, name, category, unit, reorder_level, quantity_on_hand, store_location FROM spare_items ORDER BY name`);
   const where = []; const params = [];

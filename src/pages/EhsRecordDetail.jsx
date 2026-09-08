@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Paperclip } from 'lucide-react';
 import { BackLink, Badge, Field, Button, Select, Textarea, FilePicker, AttachmentRow, SectionCard } from '../components/ui';
 import { api, uploadsUrl } from '../api/client';
+import { hasPerm } from '../config/platform';
 
 const EHS_LABEL = { PENDING: 'Pending', SUBMITTED: 'Submitted', REVIEWED: 'Reviewed' };
 const EHS_TONE = { PENDING: 'amber', SUBMITTED: 'blue', REVIEWED: 'green' };
@@ -38,7 +39,7 @@ export default function EhsRecordDetail({ id, user, onBack }) {
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!ehs) return <p className="text-sm text-slate-400">Loading…</p>;
 
-  const isAssignedEngineer = user.role === 'Engineer' && Number(user.id) === Number(ehs.engineerId);
+  const isAssignedEngineer = hasPerm(user, 'work_orders', 'manage') && Number(user.id) === Number(ehs.engineerId);
   const canSubmit = ehs.status === 'PENDING' && (isAssignedEngineer || user.role === 'Administrator');
   const canReview = ehs.status === 'SUBMITTED' && (user.role === 'EHS User' || user.role === 'Administrator');
 

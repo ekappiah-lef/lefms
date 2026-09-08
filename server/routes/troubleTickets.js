@@ -7,8 +7,9 @@
 // since it also creates a brand-new work_orders row.
 import { Router } from 'express';
 import { pool } from '../db.js';
-import { authorize, scopeRegion } from '../auth.js';
-import { getHistory, WorkflowError } from '../workflow.js';
+import { scopeRegion } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
+import { getHistory, WorkflowError, sendError } from '../workflow.js';
 import { placeholderTicketNo, finalizeTicketNo } from '../ticketNumbers.js';
 import { createWorkOrderTx } from '../workOrderCreation.js';
 import { alertEngineerAssigned, alertHighCritical } from '../smsAlerts.js';
@@ -24,7 +25,7 @@ const TT_TRANSITIONS = {
 const SELECT = `
   SELECT t.id, t.tt_no, t.title, t.description, t.priority, t.status,
          t.site_id, t.site_code, t.site_name, t.region_id, t.region_name, t.site_location, t.site_priority,
-         t.asset_id, a.name AS asset_name, a.tag AS asset_tag,
+         t.asset_id, a.name AS asset_name, a.tag AS asset_tag, t.category,
          t.created_by, cu.full_name AS created_by_name,
          t.created_at, t.closed_at, t.closed_by, bu.full_name AS closed_by_name,
          t.work_order_id, w.wo_no, w.status AS wo_status
@@ -54,7 +55,7 @@ router.get('/:id', async (req, res) => {
   res.json({ ...shape(rows[0]), history });
 });
 
-router.post('/', authorize('Supervisor', 'Engineer', 'Administrator'), async (req, res) => {
+router.post('/', authorizeModule('trouble_tickets', 'manage'), async (req, res) => {
   const b = req.body || {};
   if (!b.siteId || !b.title || !b.description) {
     return res.status(400).json({ error: 'siteId, title and description are required' });
@@ -71,10 +72,10 @@ router.post('/', authorize('Supervisor', 'Engineer', 'Administrator'), async (re
     const [r] = await conn.query(
       `INSERT INTO trouble_tickets
          (tt_no, site_id, site_code, site_name, region_id, region_name, site_location, site_priority,
-          asset_id, title, description, priority, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          asset_id, category, title, description, priority, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [placeholderTicketNo(), site.id, site.site_code, site.name, site.region_id, site.region_name, site.location, site.priority,
-       b.assetId || null, b.title, b.description, b.priority || 'Medium', req.user.id]
+       b.assetId || null, b.category || null, b.title, b.description, b.priority || 'Medium', req.user.id]
     );
     const ttId = r.insertId;
     const ttNo = await finalizeTicketNo(conn, 'trouble_tickets', 'tt_no', 'TT', ttId);
@@ -87,7 +88,7 @@ router.post('/', authorize('Supervisor', 'Engineer', 'Administrator'), async (re
     res.status(201).json({ id: ttId, ttNo });
   } catch (e) {
     await conn.rollback();
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   } finally {
     conn.release();
   }
@@ -95,7 +96,7 @@ router.post('/', authorize('Supervisor', 'Engineer', 'Administrator'), async (re
 
 // Update, Complete, Cancel, Close   same idea as the Work Order engine's
 // addUpdate/applyTransition, just against the TT's own small status set.
-router.post('/:id/actions/:action', authorize('Engineer', 'Supervisor', 'Administrator'), async (req, res) => {
+router.post('/:id/actions/:action', authorizeModule('trouble_tickets', 'manage'), async (req, res) => {
   const { action } = req.params;
   const note = req.body?.note;
   if (!note || !note.trim()) return res.status(400).json({ error: 'A note is required' });
@@ -150,13 +151,13 @@ router.post('/:id/actions/:action', authorize('Engineer', 'Supervisor', 'Adminis
     res.json({ status: rule.to, historyId: hist.insertId });
   } catch (e) {
     await conn.rollback();
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   } finally {
     conn.release();
   }
 });
 
-router.post('/:id/create-work-order', authorize('Supervisor', 'Engineer', 'Administrator'), async (req, res) => {
+router.post('/:id/create-work-order', authorizeModule('trouble_tickets', 'manage'), async (req, res) => {
   const b = req.body || {};
   if (!b.woType || !['CM', 'PM', 'PLM'].includes(b.woType)) return res.status(400).json({ error: 'A valid woType (CM, PM or PLM) is required' });
   if (!b.engineerId) return res.status(400).json({ error: 'An assigned engineer is required to create a work order' });
@@ -197,7 +198,7 @@ router.post('/:id/create-work-order', authorize('Supervisor', 'Engineer', 'Admin
     alertHighCritical({ id: woId, woNo, title: t.title, priority: t.priority, regionId: t.region_id, siteName: t.site_name });
   } catch (e) {
     await conn.rollback();
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   } finally {
     conn.release();
   }
@@ -208,7 +209,7 @@ function shape(t) {
     id: t.id, ttNo: t.tt_no, title: t.title, description: t.description, priority: t.priority, status: t.status,
     siteId: t.site_id, siteCode: t.site_code, siteName: t.site_name,
     regionId: t.region_id, regionName: t.region_name, siteLocation: t.site_location, sitePriority: t.site_priority,
-    assetId: t.asset_id, assetName: t.asset_name, assetTag: t.asset_tag,
+    assetId: t.asset_id, assetName: t.asset_name, assetTag: t.asset_tag, category: t.category,
     createdBy: t.created_by, createdByName: t.created_by_name, createdAt: t.created_at,
     closedAt: t.closed_at, closedBy: t.closed_by, closedByName: t.closed_by_name,
     workOrderId: t.work_order_id, woNo: t.wo_no, woStatus: t.wo_status,

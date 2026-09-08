@@ -95,6 +95,7 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
             <Field label="Region" value={ticket.regionName} />
             {ticket.assetName && <Field label="Asset" value={`${ticket.assetTag}   ${ticket.assetName}`} />}
             <Field label="Priority" value={<Badge value={ticket.priority} />} />
+            {ticket.category && <Field label="System / Fault Type" value={ticket.category} />}
             <Field label="Created By" value={ticket.createdByName} />
           </div>
 
@@ -194,15 +195,22 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
 }
 
 function HistoryItem({ h }) {
+  const [open, setOpen] = useState(false);
   const style = HISTORY_STYLE[h.action] || HISTORY_STYLE.update;
   return (
-    <div className="bg-white border border-slate-200 rounded-xl px-5 py-3.5">
-      <div className="flex items-center gap-3">
+    <details className="bg-white border border-slate-200 rounded-xl overflow-hidden" open={open} onToggle={(e) => setOpen(e.target.open)}>
+      <summary className="list-none flex items-center gap-3 px-5 py-3.5 cursor-pointer select-none">
         <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${style.dot}`} />
         <span className={`text-[11px] font-black tracking-wide shrink-0 w-[110px] ${style.text}`}>{style.label}</span>
-        <span className="text-[13px] text-slate-600 flex-1 truncate">{h.note}</span>
+        <span className="text-[13px] text-slate-600 flex-1 truncate"></span>
         <span className="text-[12px] text-slate-400 whitespace-nowrap shrink-0">{h.actor} · {fmtShort(h.created_at)}</span>
+      </summary>
+      <div className="px-5 pb-5 pt-3 border-t border-slate-50">
+        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5">Details</div>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">
+          {h.note}
+        </div>
       </div>
-    </div>
+    </details>
   );
 }

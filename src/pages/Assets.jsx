@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Boxes, CheckCircle2, Wrench, XCircle, Plus } from 'lucide-react';
-import { PageHeader, KpiGrid, Kpi, FilterBar, Select, Table, Td, Tr, Badge, Modal, Button, Field, Pagination, pageSlice } from '../components/ui';
+import { Plus } from 'lucide-react';
+import { PageHeader, FilterBar, Select, Table, Td, Tr, Badge, Modal, Button, Field, Pagination, pageSlice } from '../components/ui';
 import { api } from '../api/client';
 
 const STATUSES = ['Operational', 'Under Maintenance', 'Out of Service', 'Retired'];
@@ -35,13 +35,6 @@ export default function Assets({ user }) {
     <div className="space-y-5">
       <PageHeader title="Assets" subtitle="Equipment register across every site"
         actions={canManage && <Button icon={Plus} onClick={() => setShowNew(true)}>New Asset</Button>} />
-
-      <KpiGrid cols={4}>
-        <Kpi title="Total Assets" value={rows.length} icon={Boxes} />
-        <Kpi title="Operational" value={rows.filter((a) => a.status === 'Operational').length} icon={CheckCircle2} />
-        <Kpi title="Under Maintenance" value={rows.filter((a) => a.status === 'Under Maintenance').length} icon={Wrench} />
-        <Kpi title="Out of Service" value={rows.filter((a) => a.status === 'Out of Service').length} icon={XCircle} tone="rose" />
-      </KpiGrid>
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search asset…">
         <Select className="w-52" value={site} onChange={setSite} options={sites.map((s) => ({ value: String(s.id), label: `${s.siteCode}   ${s.name}` }))} label="All sites" />

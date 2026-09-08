@@ -2,11 +2,11 @@
 // list for SMS Config rules (High/Critical work orders, pending 10+ days).
 import { Router } from 'express';
 import { pool } from '../db.js';
-import { authorize } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
 
 const router = Router();
 
-router.use(authorize('Administrator'));
+router.use((req, res, next) => authorizeModule('sms', req.method === 'GET' ? 'view' : 'manage')(req, res, next));
 
 router.get('/', async (req, res) => {
   const [rows] = await pool.query(

@@ -12,18 +12,24 @@ const NAVY = '#4f46e5'; const AMBER = '#febb06';
 const STATUS_COLORS = { CR: '#2563eb', PR: '#febb06', CO: '#10b981', CL: '#94a3b8', RJ: '#dc2626', CA: '#f97316' };
 const ASSET_STATUS_COLORS = { Operational: '#10b981', 'Under Maintenance': '#f59e0b', 'Out of Service': '#ef4444', Retired: '#94a3b8' };
 const TYPE_COLORS = { CM: '#dc2626', PM: NAVY, PLM: '#7c3aed' };
+const CATEGORY_COLORS = ['#2563eb', '#f59e0b', '#10b981', '#ec4899', '#7c3aed', '#dc2626', '#0891b2', '#84cc16'];
 
 export default function Overview({ user }) {
   const [data, setData] = useState(null);
+  const [ttData, setTtData] = useState(null);
   const [error, setError] = useState('');
   const isMsUser = user?.role === 'MS User';
 
   useEffect(() => {
     api.dashboard.overview().then(setData).catch((e) => setError(e.message));
+    api.dashboard.troubleTickets().then(setTtData).catch(() => {});
   }, []);
 
   if (error) return <p className="text-sm text-red-600">Could not load the dashboard: {error}</p>;
   if (!data) return <p className="text-sm text-slate-400">Loading…</p>;
+
+  const ttBySite = (ttData?.bySite || []).map((s) => ({ name: s.siteName, count: s.count }));
+  const ttByCategory = (ttData?.byCategory || []).map((c, i) => ({ name: c.category, value: c.count, color: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }));
 
   const statusDonut = Object.entries(data.combinedStatus).map(([k, v]) => ({ name: STATUS_LABELS[k], value: v, color: STATUS_COLORS[k] }));
   const assetsDonut = data.assetsByStatus.map((a) => ({ name: a.status, value: a.c, color: ASSET_STATUS_COLORS[a.status] || '#94a3b8' }));
@@ -32,7 +38,7 @@ export default function Overview({ user }) {
   // (awaiting close)" bucket, Closed is its own segment like every other
   // status. Bars are grouped side-by-side, not stacked.
   const regionBar = data.byRegion.map((r) => ({ name: r.regionName, ...r }));
-  const siteBar = (data.bySite || []).map((s) => ({ name: s.siteCode, ...s }));
+  const siteBar = (data.bySite || []).map((s) => ({ name: s.siteName, ...s }));
   const trend = data.trend.map((r) => ({ ym: r.ym, c: Number(r.c) }));
 
   return (
@@ -92,6 +98,22 @@ export default function Overview({ user }) {
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-4">
+        <SectionCard title="Trouble Ticket Issues by Data Centre" className="lg:col-span-2">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={ttBySite} margin={{ left: -18, right: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" name="Issues" fill={NAVY} radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        <DonutBreakdown title="Issues by System / Fault Type" data={ttByCategory} totalLabel="Trouble Tickets" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">

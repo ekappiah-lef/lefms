@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { UsersRound, Plus, Eye, Pencil } from 'lucide-react';
-import { PageHeader, KpiGrid, Kpi, Tabs, Table, Td, Tr, Badge, Modal, Button, Select, Field, RowActions, IconBtn, DeleteBtn, Pagination, pageSlice } from '../../components/ui';
+import { Plus, Eye, Pencil } from 'lucide-react';
+import { PageHeader, Tabs, Table, Td, Tr, Badge, Modal, Button, Select, Field, RowActions, IconBtn, DeleteBtn, Pagination, pageSlice } from '../../components/ui';
 import { api } from '../../api/client';
 
-const REGION_SCOPED_ROLES = ['Supervisor', 'Engineer'];
+// Mirrors server/auth.js's scopeRegion(): every role except these four is
+// restricted to its own region, so a Region must be picked for it (this
+// also covers custom roles like "NOC Engineer" automatically   without a
+// region they'd match nothing, not "see everything").
+const REGION_EXEMPT_ROLES = ['Administrator', 'EHS User', 'Spare User', 'MS User'];
 
 export default function Users() {
   const [rows, setRows] = useState([]);
@@ -36,13 +40,6 @@ export default function Users() {
     <div className="space-y-5">
       <PageHeader title="Users" subtitle="Administrators, supervisors, engineers and other staff with access to this system"
         actions={<Button icon={Plus} onClick={() => setShowNew(true)}>New User</Button>} />
-
-      <KpiGrid cols={4}>
-        <Kpi title="Total Users" value={rows.length} icon={UsersRound} />
-        <Kpi title="Engineers" value={rows.filter((u) => u.role === 'Engineer').length} icon={UsersRound} />
-        <Kpi title="Supervisors" value={rows.filter((u) => u.role === 'Supervisor').length} icon={UsersRound} />
-        <Kpi title="Active" value={rows.filter((u) => u.isActive).length} icon={UsersRound} />
-      </KpiGrid>
 
       <Tabs tabs={['All Users', 'Engineers / Field Users']} active={tab} onChange={setTab} />
 
@@ -104,7 +101,7 @@ function NewUser({ roles, regions, onClose, onCreated }) {
   const set = (k) => (v) => setF((s) => ({ ...s, [k]: v }));
 
   const roleName = roles.find((r) => String(r.id) === String(f.roleId))?.name;
-  const needsRegion = REGION_SCOPED_ROLES.includes(roleName);
+  const needsRegion = roleName && !REGION_EXEMPT_ROLES.includes(roleName);
   const canSave = f.staffNo && f.fullName && f.email && f.password && f.roleId && (!needsRegion || f.regionId);
 
   const save = async () => {
@@ -146,7 +143,7 @@ function EditUser({ user, roles, regions, onClose, onSaved }) {
   const set = (k) => (v) => setF((s) => ({ ...s, [k]: v }));
 
   const roleName = roles.find((r) => String(r.id) === String(f.roleId))?.name;
-  const needsRegion = REGION_SCOPED_ROLES.includes(roleName);
+  const needsRegion = roleName && !REGION_EXEMPT_ROLES.includes(roleName);
   const canSave = f.fullName && f.email && f.roleId && (!needsRegion || f.regionId);
 
   const save = async () => {

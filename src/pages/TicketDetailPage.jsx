@@ -3,6 +3,7 @@ import { Paperclip, Trash2 } from 'lucide-react';
 import { BackLink, Badge, Field, Button, Select, Textarea, FilePicker, AttachmentRow, SectionCard, Modal, IconBtn, RadioGroup } from '../components/ui';
 import { api, uploadsUrl } from '../api/client';
 import { STATUS_LABELS, STATUS_TONE, HISTORY_STYLE, availableActions } from '../lib/workflow';
+import { hasPerm } from '../config/platform';
 
 const RADIO_TONE = { success: 'success', danger: 'danger', navy: 'navy', amber: 'amber', ghost: 'navy' };
 const ATTACHABLE_ACTIONS = ['update', 'complete'];
@@ -21,7 +22,7 @@ function fmtShort(dt) {
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-export default function TicketDetailPage({ id, user, onBack, onChanged }) {
+export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEhs }) {
   const [ticket, setTicket] = useState(null);
   const [engineers, setEngineers] = useState([]);
   const [error, setError] = useState('');
@@ -199,6 +200,9 @@ export default function TicketDetailPage({ id, user, onBack, onChanged }) {
               {ticket.ehsStatus === 'PENDING' && ticket.ehsOutcome !== 'Flagged' && (
                 <p className="text-[12px] text-slate-400">Complete and submit EHS before this work order can be completed.</p>
               )}
+              {ticket.ehsId && onOpenEhs && (
+                <Button size="sm" variant="ghost" onClick={() => onOpenEhs(ticket.ehsId)}>Open EHS Record</Button>
+              )}
             </div>
           </SectionCard>
 
@@ -215,7 +219,7 @@ export default function TicketDetailPage({ id, user, onBack, onChanged }) {
                 ))}
               </div>
             )}
-            {['Engineer', 'Supervisor', 'Administrator'].includes(user.role) && ['CR', 'PR'].includes(ticket.status) && (
+            {hasPerm(user, 'work_orders', 'manage') && ['CR', 'PR'].includes(ticket.status) && (
               <Button size="sm" variant="ghost" onClick={() => setShowSpareModal(true)}>Request Spare</Button>
             )}
           </SectionCard>

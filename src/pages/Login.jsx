@@ -4,7 +4,7 @@ import { api, setToken } from '../api/client';
 import lefLogo from '../assets/whitelogo.png';
 import loginBg from '../assets/backgroundlogin.jpg';
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, notice }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -33,9 +33,9 @@ export default function Login({ onLogin }) {
       <form onSubmit={submit} className="relative z-10 flex flex-col items-center px-6 w-full">
         <img src={lefLogo} alt="LEF" className="h-16 w-auto object-contain mb-8" />
 
-        {error && (
-          <div className="w-full max-w-[300px] flex items-start gap-2 rounded-lg bg-red-500/20 border border-red-300/40 text-red-50 text-sm px-3 py-2.5 mb-4">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" /><span>{error}</span>
+        {(error || notice) && (
+          <div className={`w-full max-w-[300px] flex items-start gap-2 rounded-lg border text-sm px-3 py-2.5 mb-4 ${error ? 'bg-red-500/20 border-red-300/40 text-red-50' : 'bg-white/15 border-white/30 text-white'}`}>
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" /><span>{error || notice}</span>
           </div>
         )}
 

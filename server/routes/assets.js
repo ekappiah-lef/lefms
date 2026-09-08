@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { authorize } from '../auth.js';
+import { sendError } from '../workflow.js';
 
 const router = Router();
 
@@ -39,7 +40,7 @@ router.post('/', authorize('Supervisor', 'Administrator'), async (req, res) => {
     res.status(201).json({ id: r.insertId });
   } catch (e) {
     if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Asset tag already exists' });
-    res.status(500).json({ error: e.message });
+    sendError(res, e);
   }
 });
 
@@ -60,7 +61,7 @@ router.delete('/:id', authorize('Administrator'), async (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     if (e.code?.startsWith('ER_ROW_IS_REFERENCED')) return res.status(409).json({ error: 'This asset has tickets on record   retire it instead of deleting.' });
-    res.status(500).json({ error: e.message });
+    sendError(res, e);
   }
 });
 

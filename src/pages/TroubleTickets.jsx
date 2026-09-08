@@ -24,7 +24,7 @@ export default function TroubleTickets({ user, openCreate, openDetail }) {
   return (
     <div className="space-y-5">
       <PageHeader title="Trouble Tickets" subtitle="All raised trouble tickets across all sites"
-        actions={canCreateIn(user) && <Button icon={Plus} onClick={() => openCreate('trouble_ticket')}>New Trouble Ticket</Button>} />
+        actions={canCreateIn(user, 'trouble_tickets') && <Button icon={Plus} onClick={() => openCreate('trouble_ticket')}>New Trouble Ticket</Button>} />
 
       <KpiGrid cols={3}>
         <Kpi title="Total TT" value={rows.length} icon={AlertOctagon} />

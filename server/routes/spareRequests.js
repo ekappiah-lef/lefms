@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { authorize, scopeRegion } from '../auth.js';
-import { getHistory, WorkflowError } from '../workflow.js';
+import { getHistory, WorkflowError, sendError } from '../workflow.js';
 import { placeholderTicketNo, finalizeTicketNo } from '../ticketNumbers.js';
 
 const router = Router();
@@ -91,7 +91,7 @@ router.post('/', authorize('Engineer', 'Supervisor', 'Administrator'), async (re
     res.status(201).json({ id: requestId, requestNo });
   } catch (e) {
     await conn.rollback();
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   } finally {
     conn.release();
   }
@@ -184,7 +184,7 @@ router.post('/:id/actions/:action', authorize('Spare User', 'Administrator'), as
     throw new WorkflowError(`Unknown action "${action}"`, 400);
   } catch (e) {
     await conn.rollback();
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   } finally {
     conn.release();
   }

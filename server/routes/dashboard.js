@@ -147,6 +147,30 @@ router.get('/ehs', async (req, res) => {
   });
 });
 
+// "Issues by Data Centre" (site) and "Issues by System / Fault Type"
+// (category)   the two trouble-ticket breakdowns shown on the main
+// dashboard, mirroring the incident-log charts used to track these before
+// they lived in LEF MS.
+router.get('/trouble-tickets', async (req, res) => {
+  const regionId = scopeRegion(req);
+  const params = []; let where = '';
+  if (regionId) { where = 'WHERE t.region_id = ?'; params.push(regionId); }
+
+  const [bySiteRows] = await pool.query(
+    `SELECT t.site_id, t.site_code, t.site_name, COUNT(*) c FROM trouble_tickets t ${where} GROUP BY t.site_id, t.site_code, t.site_name ORDER BY t.site_code`, params
+  );
+  const bySite = bySiteRows.map((r) => ({ siteId: r.site_id, siteCode: r.site_code, siteName: r.site_name, count: r.c }));
+
+  const [byCategoryRows] = await pool.query(
+    `SELECT COALESCE(t.category, 'Uncategorised') AS category, COUNT(*) c FROM trouble_tickets t ${where} GROUP BY category ORDER BY c DESC`, params
+  );
+  const byCategory = byCategoryRows.map((r) => ({ category: r.category, count: r.c }));
+
+  const [[{ total }]] = await pool.query(`SELECT COUNT(*) total FROM trouble_tickets t ${where}`, params);
+
+  res.json({ total, bySite, byCategory });
+});
+
 router.get('/spares', async (req, res) => {
   const regionId = scopeRegion(req);
   const params = []; let where = '';

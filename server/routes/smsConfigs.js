@@ -2,12 +2,12 @@
 // to one region (e.g. a group that only wants Greater Accra work orders).
 import { Router } from 'express';
 import { pool } from '../db.js';
-import { authorize } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
 
 const router = Router();
 const EVENT_TYPES = ['wo_high_critical', 'wo_pending'];
 
-router.use(authorize('Administrator'));
+router.use((req, res, next) => authorizeModule('sms', req.method === 'GET' ? 'view' : 'manage')(req, res, next));
 
 router.get('/', async (req, res) => {
   const [rows] = await pool.query(

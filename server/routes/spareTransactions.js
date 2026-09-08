@@ -14,6 +14,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { authorize } from '../auth.js';
+import { sendError } from '../workflow.js';
 
 const router = Router();
 
@@ -83,7 +84,7 @@ async function directMove(req, res, { type, sign }) {
     res.status(201).json({ id: r.insertId });
   } catch (e) {
     await conn.rollback();
-    res.status(e.status || 500).json({ error: e.message });
+    sendError(res, e);
   } finally {
     conn.release();
   }

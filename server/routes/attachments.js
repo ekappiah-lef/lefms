@@ -14,7 +14,20 @@ const storage = multer.diskStorage({
     cb(null, `${req.body.entityType || 'file'}-${req.body.entityId || '0'}-${Date.now()}-${safe}`);
   },
 });
-const upload = multer({ storage, limits: { fileSize: 15 * 1024 * 1024 } });
+// Photos + PDFs only   this is what the app actually asks for (EHS photos,
+// completion evidence). Anything else (HTML/SVG/scripts/executables) is
+// rejected outright: files here are served back out statically from
+// /uploads, so accepting arbitrary types would mean hosting attacker-
+// controlled content (e.g. a stored-XSS HTML/SVG file) on our own origin.
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+const upload = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) return cb(new Error('Only images (JPEG/PNG/WEBP/GIF) and PDF files are allowed'));
+    cb(null, true);
+  },
+});
 
 const ENTITY_TYPES = ['work_order', 'ehs_record', 'spare_request', 'spare_transaction'];
 
@@ -31,7 +44,12 @@ router.get('/', async (req, res) => {
   res.json(rows);
 });
 
-router.post('/', upload.single('file'), async (req, res) => {
+router.post('/', (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
   const { entityType, entityId, stage, historyId } = req.body || {};
   if (!ENTITY_TYPES.includes(entityType) || !entityId || !req.file) {
     return res.status(400).json({ error: 'entityType, entityId and a file are required' });

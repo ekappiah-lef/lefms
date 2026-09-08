@@ -4,6 +4,10 @@ import { api } from '../api/client';
 import { resize } from 'motion';
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical', 'Emergency'];
+export const TT_CATEGORIES = [
+  'AC Preventive Servicing', 'AC Fan Motor Fault', 'AC Compressor Fault', 'AC Fault',
+  'Generator / DG PM', 'Generator Fault', 'Electrical Fault', 'Other',
+];
 
 const FieldLabel = ({ children }) => <label className="text-[11px] font-semibold text-slate-600">{children}</label>;
 const TextInput = (props) => <input {...props} className="mt-1 w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" />;
@@ -21,7 +25,7 @@ const ReadOnlyInput = ({ label, value }) => (
 export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
   const [sites, setSites] = useState([]);
   const [assets, setAssets] = useState([]);
-  const [f, setF] = useState({ siteId: '', assetId: '', title: '', description: '', priority: 'Medium' });
+  const [f, setF] = useState({ siteId: '', assetId: '', title: '', description: '', priority: 'Medium', category: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,7 +46,7 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
     try {
       const { id } = await api.troubleTickets.create({
         siteId: Number(f.siteId), assetId: f.assetId ? Number(f.assetId) : null,
-        title: f.title, description: f.description, priority: f.priority,
+        title: f.title, description: f.description, priority: f.priority, category: f.category || null,
       });
       onCreated(id);
     } catch (e) {
@@ -95,6 +99,11 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
             <FieldLabel>Priority</FieldLabel>
             <div className="mt-1"><Select value={f.priority} onChange={set('priority')} options={PRIORITIES} /></div>
           </div>
+        </div>
+
+        <div className="mt-5">
+          <FieldLabel>System / Fault Type (optional)</FieldLabel>
+          <div className="mt-1"><Select value={f.category} onChange={set('category')} options={TT_CATEGORIES} label="Not categorised" /></div>
         </div>
 
 

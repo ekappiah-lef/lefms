@@ -4,6 +4,7 @@
 // server is the source of truth (it re-checks all of this); this just
 // decides which buttons to render.
 // =====================================================================
+import { hasPerm } from '../config/platform';
 export const STATUS_LABELS = { CR: 'Created', PR: 'In Process', CO: 'Completed', CL: 'Closed', RJ: 'Rejected', CA: 'Cancelled' };
 export const STATUS_TONE = { CR: 'blue', PR: 'amber', CO: 'green', CL: 'slate', RJ: 'red', CA: 'red' };
 export const ALL_STATUSES = ['CR', 'PR', 'CO', 'CL', 'RJ', 'CA'];
@@ -50,7 +51,7 @@ export function availableActions(ticket, user) {
   const eligible = list.filter((a) => a.action !== 'complete' || hasUpdate);
   if (user.role === 'Administrator') return eligible;
   return eligible.filter((a) => {
-    if (a.who === 'engineer') return user.role === 'Engineer' && Number(user.id) === Number(ticket.engineerId);
+    if (a.who === 'engineer') return hasPerm(user, 'work_orders', 'manage') && Number(user.id) === Number(ticket.engineerId);
     if (a.who === 'supervisor') return user.role === 'Supervisor' && Number(user.regionId) === Number(ticket.regionId);
     return false;
   });
@@ -73,10 +74,12 @@ export const HISTORY_STYLE = {
   ehs_flagged: { label: 'EHS FLAGGED', dot: 'bg-red-500',  text: 'text-red-600' },
 };
 
-// Any Supervisor, Engineer or Administrator may create a work order   the
-// site picker in CreateTicketPage decides which sites they see.
-export function canCreateIn(user) {
-  return ['Administrator', 'Supervisor', 'Engineer'].includes(user.role);
+// Anyone whose role can manage the given module (Work Orders or Trouble
+// Tickets   built-in Engineer/Supervisor, or a custom role like "NOC
+// Engineer") may create one there. The site picker in CreateTicketPage
+// decides which sites they see.
+export function canCreateIn(user, module = 'work_orders') {
+  return hasPerm(user, module, 'manage');
 }
 
 export function canDelete(user, ticket) {
@@ -99,7 +102,7 @@ export const TT_STATUS_TONE = { OPEN: 'blue', COMPLETED: 'green', CANCELLED: 're
 const WO_TERMINAL = ['CO', 'CL', 'CA'];
 
 export function ttAvailableActions(tt, hasUpdate, user) {
-  const canAct = ['Engineer', 'Supervisor', 'Administrator'].includes(user.role);
+  const canAct = hasPerm(user, 'trouble_tickets', 'manage');
   const canClose = user.role === 'Administrator' || (user.role === 'Supervisor' && Number(user.regionId) === Number(tt.regionId));
   if (tt.status === 'OPEN') {
     if (!canAct) return [];

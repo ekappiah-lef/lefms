@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { pool } from '../db.js';
 import { scopeRegion } from '../auth.js';
 import { submitEhs, reviewEhs } from '../ehsWorkflow.js';
-import { getHistory, WorkflowError } from '../workflow.js';
+import { getHistory, WorkflowError, sendError } from '../workflow.js';
 
 const router = Router();
 
@@ -49,7 +49,7 @@ router.post('/:id/actions/submit', async (req, res) => {
     const result = await submitEhs(req.params.id, req.user, req.body?.note, req.body?.checklistResponses);
     res.json(result);
   } catch (e) {
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   }
 });
 
@@ -58,7 +58,7 @@ router.post('/:id/actions/review', async (req, res) => {
     const result = await reviewEhs(req.params.id, req.user, req.body?.note, req.body?.outcome);
     res.json(result);
   } catch (e) {
-    res.status(e instanceof WorkflowError ? e.status : 500).json({ error: e.message });
+    sendError(res, e);
   }
 });
 

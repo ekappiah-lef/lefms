@@ -1,11 +1,18 @@
 import { describe, test, expect } from 'vitest';
 import { availableActions, ttAvailableActions, canCreateIn, canDelete } from './workflow';
 
+// Mirrors the built-in roles' seeded role_permissions rows (see
+// server/migrations/2026-09-08-role-permissions.sql)   real user objects
+// always carry this `permissions` map (from /auth/login and /auth/me).
+const ENGINEER_PERMS = { trouble_tickets: 'manage', work_orders: 'manage' };
+const SUPERVISOR_PERMS = { trouble_tickets: 'manage', work_orders: 'manage' };
+const MS_USER_PERMS = { trouble_tickets: 'view', work_orders: 'view' };
+
 describe('availableActions (Work Order)', () => {
-  const engineer = { role: 'Engineer', id: 7, regionId: 1 };
-  const otherEngineer = { role: 'Engineer', id: 9, regionId: 1 };
-  const supervisor = { role: 'Supervisor', id: 3, regionId: 1 };
-  const otherRegionSupervisor = { role: 'Supervisor', id: 4, regionId: 2 };
+  const engineer = { role: 'Engineer', id: 7, regionId: 1, permissions: ENGINEER_PERMS };
+  const otherEngineer = { role: 'Engineer', id: 9, regionId: 1, permissions: ENGINEER_PERMS };
+  const supervisor = { role: 'Supervisor', id: 3, regionId: 1, permissions: SUPERVISOR_PERMS };
+  const otherRegionSupervisor = { role: 'Supervisor', id: 4, regionId: 2, permissions: SUPERVISOR_PERMS };
   const admin = { role: 'Administrator', id: 1 };
 
   test('Created offers only Accept/Reject, to the assigned engineer only', () => {
@@ -48,9 +55,9 @@ describe('availableActions (Work Order)', () => {
 });
 
 describe('ttAvailableActions (Trouble Ticket)', () => {
-  const engineer = { role: 'Engineer', id: 7, regionId: 1 };
-  const supervisor = { role: 'Supervisor', id: 3, regionId: 1 };
-  const msUser = { role: 'MS User', id: 5 };
+  const engineer = { role: 'Engineer', id: 7, regionId: 1, permissions: ENGINEER_PERMS };
+  const supervisor = { role: 'Supervisor', id: 3, regionId: 1, permissions: SUPERVISOR_PERMS };
+  const msUser = { role: 'MS User', id: 5, permissions: MS_USER_PERMS };
 
   test('Open, not yet converted, no update: only Update and Cancel   no Complete/Create Work Order', () => {
     const tt = { status: 'OPEN', regionId: 1, workOrderId: null, woStatus: null };
@@ -92,10 +99,16 @@ describe('ttAvailableActions (Trouble Ticket)', () => {
 describe('canCreateIn / canDelete', () => {
   test('only Administrator, Supervisor and Engineer can create work orders', () => {
     expect(canCreateIn({ role: 'Administrator' })).toBe(true);
-    expect(canCreateIn({ role: 'Supervisor' })).toBe(true);
-    expect(canCreateIn({ role: 'Engineer' })).toBe(true);
-    expect(canCreateIn({ role: 'MS User' })).toBe(false);
+    expect(canCreateIn({ role: 'Supervisor', permissions: SUPERVISOR_PERMS })).toBe(true);
+    expect(canCreateIn({ role: 'Engineer', permissions: ENGINEER_PERMS })).toBe(true);
+    expect(canCreateIn({ role: 'MS User', permissions: MS_USER_PERMS })).toBe(false);
     expect(canCreateIn({ role: 'Spare User' })).toBe(false);
+  });
+
+  test('a custom role with manage on the module can also create   e.g. "NOC Engineer"', () => {
+    const nocEngineer = { role: 'NOC Engineer', permissions: { trouble_tickets: 'manage', work_orders: 'manage' } };
+    expect(canCreateIn(nocEngineer, 'work_orders')).toBe(true);
+    expect(canCreateIn(nocEngineer, 'trouble_tickets')).toBe(true);
   });
 
   test('only Administrator can delete, and only while still Created', () => {

@@ -15,6 +15,7 @@
 // for that separate, smaller lifecycle).
 // =====================================================================
 import { pool } from './db.js';
+import { hasPermission } from './permissions.js';
 
 const TABLES = {
   work_order: 'work_orders',
@@ -34,6 +35,17 @@ export class WorkflowError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
 }
 
+// Shared route error responder: an intentional, user-facing error (any
+// error with a `.status` -- WorkflowError or duck-typed alike) is safe to
+// send verbatim; anything else is unexpected (a DB/driver error, a bug)
+// and must never leak its raw message to the client -- log it server-side
+// and send a generic one instead.
+export function sendError(res, e) {
+  if (e.status) return res.status(e.status).json({ error: e.message });
+  console.error(e);
+  return res.status(500).json({ error: 'Unexpected server error' });
+}
+
 // Loads the minimal ticket fields the engine needs.
 export async function loadTicket(entityType, id, conn = pool) {
   const table = TABLES[entityType];
@@ -44,10 +56,16 @@ export async function loadTicket(entityType, id, conn = pool) {
   return rows[0];
 }
 
-function assertPermission(rule, ticket, user) {
+// "engineer" here means "whoever this ticket is assigned to" -- gated by
+// the assignee's identity plus their role holding manage on work_orders
+// (not the literal role name "Engineer"), so a custom role granted
+// manage on Work Orders (e.g. "NOC Engineer") can also be assigned to
+// and act on its own tickets. Supervisor's region-wide close/reopen
+// authority stays tied to the literal "Supervisor" role name.
+async function assertPermission(rule, ticket, user) {
   if (user.role === 'Administrator') return;
   if (rule.who === 'engineer') {
-    if (user.role !== 'Engineer' || Number(user.id) !== Number(ticket.engineer_id)) {
+    if (Number(user.id) !== Number(ticket.engineer_id) || !(await hasPermission(user, 'work_orders', 'manage'))) {
       throw new WorkflowError('Only the assigned engineer can perform this action', 403);
     }
   } else if (rule.who === 'supervisor') {
@@ -89,7 +107,7 @@ export async function applyTransition(entityType, id, action, user, note, extra 
     if (!rule.from.includes(ticket.status)) {
       throw new WorkflowError(`Cannot ${action} a ticket in status ${ticket.status}`, 409);
     }
-    assertPermission(rule, ticket, user);
+    await assertPermission(rule, ticket, user);
     if (action === 'complete') await assertEhsClearedForComplete(conn, id);
 
     const sets = ['status = ?'];
@@ -145,7 +163,7 @@ export async function addUpdate(entityType, id, user, note) {
     if (!ACTIVE_STATUSES.includes(ticket.status)) {
       throw new WorkflowError(`Cannot add an update to a ticket in status ${ticket.status}`, 409);
     }
-    if (user.role !== 'Administrator' && (user.role !== 'Engineer' || Number(user.id) !== Number(ticket.engineer_id))) {
+    if (user.role !== 'Administrator' && (Number(user.id) !== Number(ticket.engineer_id) || !(await hasPermission(user, 'work_orders', 'manage')))) {
       throw new WorkflowError('Only the assigned engineer can post an update', 403);
     }
     const [hist] = await conn.query(

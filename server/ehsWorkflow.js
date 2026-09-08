@@ -11,6 +11,7 @@
 // =====================================================================
 import { pool } from './db.js';
 import { WorkflowError } from './workflow.js';
+import { hasPermission } from './permissions.js';
 
 export async function loadEhs(id, conn = pool) {
   const [rows] = await conn.query(
@@ -32,7 +33,11 @@ export async function submitEhs(id, user, note, checklistResponses) {
     await conn.beginTransaction();
     const ehs = await loadEhs(id, conn);
     if (ehs.status !== 'PENDING') throw new WorkflowError(`Cannot submit EHS in status ${ehs.status}`, 409);
-    if (user.role !== 'Administrator' && (user.role !== 'Engineer' || Number(user.id) !== Number(ehs.engineer_id))) {
+    // Submitting your own work order's EHS record is an extension of
+    // being that work order's assignee (same rule as accept/complete in
+    // workflow.js), not the separate "ehs" module permission -- that one
+    // only governs the EHS User's review queue/action below.
+    if (user.role !== 'Administrator' && (Number(user.id) !== Number(ehs.engineer_id) || !(await hasPermission(user, 'work_orders', 'manage')))) {
       throw new WorkflowError('Only the assigned engineer can submit this EHS record', 403);
     }
 
