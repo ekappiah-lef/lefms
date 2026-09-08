@@ -3,11 +3,12 @@ import { Plus, Eye, Pencil } from 'lucide-react';
 import { PageHeader, Tabs, Table, Td, Tr, Badge, Modal, Button, Select, Field, RowActions, IconBtn, DeleteBtn, Pagination, pageSlice } from '../../components/ui';
 import { api } from '../../api/client';
 
-// Mirrors server/auth.js's scopeRegion(): every role except these four is
-// restricted to its own region, so a Region must be picked for it (this
-// also covers custom roles like "NOC Engineer" automatically   without a
-// region they'd match nothing, not "see everything").
-const REGION_EXEMPT_ROLES = ['Administrator', 'EHS User', 'Spare User', 'MS User'];
+// Mirrors server/auth.js's scopeRegion(): only Supervisor and Engineer
+// are tied to one region, so only they get (and require) the Region
+// field. A custom role like "NOC Engineer" isn't site-based the way a
+// field Engineer is, so it doesn't get a region at all -- it works
+// across every region, same as Administrator/EHS User/Spare User/MS User.
+const REGION_REQUIRED_ROLES = ['Supervisor', 'Engineer'];
 
 export default function Users() {
   const [rows, setRows] = useState([]);
@@ -101,7 +102,7 @@ function NewUser({ roles, regions, onClose, onCreated }) {
   const set = (k) => (v) => setF((s) => ({ ...s, [k]: v }));
 
   const roleName = roles.find((r) => String(r.id) === String(f.roleId))?.name;
-  const needsRegion = roleName && !REGION_EXEMPT_ROLES.includes(roleName);
+  const needsRegion = REGION_REQUIRED_ROLES.includes(roleName);
   const canSave = f.staffNo && f.fullName && f.email && f.password && f.roleId && (!needsRegion || f.regionId);
 
   const save = async () => {
@@ -143,7 +144,7 @@ function EditUser({ user, roles, regions, onClose, onSaved }) {
   const set = (k) => (v) => setF((s) => ({ ...s, [k]: v }));
 
   const roleName = roles.find((r) => String(r.id) === String(f.roleId))?.name;
-  const needsRegion = roleName && !REGION_EXEMPT_ROLES.includes(roleName);
+  const needsRegion = REGION_REQUIRED_ROLES.includes(roleName);
   const canSave = f.fullName && f.email && f.roleId && (!needsRegion || f.regionId);
 
   const save = async () => {

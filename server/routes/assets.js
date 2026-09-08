@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { authorize } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
 import { sendError } from '../workflow.js';
 
 const router = Router();
@@ -28,7 +29,7 @@ router.get('/:id', async (req, res) => {
   res.json(shape(rows[0]));
 });
 
-router.post('/', authorize('Supervisor', 'Administrator'), async (req, res) => {
+router.post('/', authorizeModule('assets', 'manage'), async (req, res) => {
   const b = req.body || {};
   if (!b.tag || !b.name || !b.category || !b.siteId) return res.status(400).json({ error: 'tag, name, category and siteId are required' });
   try {
@@ -44,7 +45,7 @@ router.post('/', authorize('Supervisor', 'Administrator'), async (req, res) => {
   }
 });
 
-router.put('/:id', authorize('Supervisor', 'Administrator'), async (req, res) => {
+router.put('/:id', authorizeModule('assets', 'manage'), async (req, res) => {
   const b = req.body || {};
   const fields = { name: b.name, category: b.category, site_id: b.siteId, manufacturer: b.manufacturer, model: b.model, serial_no: b.serialNo, calibration_due_date: b.calibrationDueDate, warranty_expiry: b.warrantyExpiry, status: b.status };
   const sets = []; const params = [];

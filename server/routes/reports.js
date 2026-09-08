@@ -330,6 +330,7 @@ router.get('/export/tt-excel', authorizeModule('tt_reports', 'view'), async (req
   if (req.query.from) { where.push('t.created_at >= ?'); params.push(req.query.from); }
   if (req.query.to) { where.push('t.created_at <= ?'); params.push(req.query.to); }
   const sql = `SELECT t.tt_no, t.title, t.site_name, t.site_code, t.region_name, t.category, t.priority, t.status,
+                      t.fault_occurred_at, t.fault_resolved_at,
                       cu.full_name AS created_by, t.created_at, t.closed_at, bu.full_name AS closed_by,
                       w.wo_no, w.status AS wo_status
                FROM trouble_tickets t
@@ -342,10 +343,10 @@ router.get('/export/tt-excel', authorizeModule('tt_reports', 'view'), async (req
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'LEF MS';
   const sheet = workbook.addWorksheet('Trouble Tickets');
-  const columns = ['tt_no', 'title', 'site_name', 'site_code', 'region_name', 'category', 'priority', 'status', 'created_by', 'created_at', 'closed_at', 'closed_by', 'wo_no', 'wo_status'];
+  const columns = ['tt_no', 'title', 'site_name', 'site_code', 'region_name', 'category', 'priority', 'status', 'fault_occurred_at', 'fault_resolved_at', 'created_by', 'created_at', 'closed_at', 'closed_by', 'wo_no', 'wo_status'];
   sheet.columns = columns.map((c) => ({ header: c.replace(/_/g, ' ').toUpperCase(), key: c, width: 20 }));
   sheet.getRow(1).font = { bold: true };
-  rows.forEach((r) => sheet.addRow(r));
+  rows.forEach((r) => sheet.addRow({ ...r, wo_status: r.wo_status ? (STATUS_LABELS_FULL[r.wo_status] || r.wo_status) : r.wo_status }));
 
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="lefms-trouble-tickets-${Date.now()}.xlsx"`);

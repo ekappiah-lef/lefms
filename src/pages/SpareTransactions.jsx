@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Paperclip } from 'lucide-react';
 import { PageHeader, Select, RadioGroup, Table, Td, Tr, Badge, Modal, Button, Textarea, FilePicker, AttachmentRow, Pagination, pageSlice } from '../components/ui';
 import { api, uploadsUrl } from '../api/client';
+import { hasPerm } from '../config/platform';
 
 const TYPE_TONE = { 'Direct Issue': 'red', 'Direct Return': 'green', Issue: 'blue', Return: 'purple', Restock: 'green', Adjustment: 'slate', 'Sent for Service': 'amber' };
 const EVIDENCE_ACCEPT = 'image/*,.pdf,.doc,.docx';
@@ -19,7 +20,7 @@ export default function SpareTransactions({ user }) {
   const [busy, setBusy] = useState(false);
   const [modal, setModal] = useState(null); // 'issue' | 'return' | null
   const [evidenceFor, setEvidenceFor] = useState(null);
-  const canManage = user.role === 'Spare User' || user.role === 'Administrator';
+  const canManage = hasPerm(user, 'spare_transactions', 'manage');
 
   const refresh = useCallback(() => {
     setLoading(true);

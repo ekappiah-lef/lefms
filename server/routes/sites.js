@@ -5,6 +5,7 @@ import multer from 'multer';
 import ExcelJS from 'exceljs';
 import { pool } from '../db.js';
 import { authorize, scopeRegion } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
 import { sendError } from '../workflow.js';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -35,7 +36,7 @@ router.get('/:id', async (req, res) => {
   res.json(shape(rows[0]));
 });
 
-router.post('/', authorize('Administrator'), async (req, res) => {
+router.post('/', authorizeModule('site_database', 'manage'), async (req, res) => {
   const b = req.body || {};
   if (!b.siteCode || !b.name || !b.regionId) return res.status(400).json({ error: 'siteCode, name and regionId are required' });
   try {
@@ -50,7 +51,7 @@ router.post('/', authorize('Administrator'), async (req, res) => {
   }
 });
 
-router.put('/:id', authorize('Administrator'), async (req, res) => {
+router.put('/:id', authorizeModule('site_database', 'manage'), async (req, res) => {
   const b = req.body || {};
   const fields = { name: b.name, region_id: b.regionId, location: b.location, priority: b.priority, assigned_engineer_id: b.assignedEngineerId, is_active: b.isActive !== undefined ? (b.isActive ? 1 : 0) : undefined };
   const sets = []; const params = [];
@@ -75,7 +76,7 @@ router.delete('/:id', authorize('Administrator'), async (req, res) => {
 // Site ID | Site Name | Region | Location | Priority | Assigned Engineer (staff no. or email)
 // Validates every row before inserting any   returns a per-row report,
 // never silently creates a partially-invalid record.
-router.post('/bulk-import', authorize('Administrator'), upload.single('file'), async (req, res) => {
+router.post('/bulk-import', authorizeModule('site_database', 'manage'), upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'An Excel file is required' });
 
   const workbook = new ExcelJS.Workbook();

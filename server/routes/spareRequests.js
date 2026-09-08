@@ -4,7 +4,8 @@
 // same DB transaction as the request-item update   never a bare UPDATE.
 import { Router } from 'express';
 import { pool } from '../db.js';
-import { authorize, scopeRegion } from '../auth.js';
+import { scopeRegion } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
 import { getHistory, WorkflowError, sendError } from '../workflow.js';
 import { placeholderTicketNo, finalizeTicketNo } from '../ticketNumbers.js';
 
@@ -55,7 +56,7 @@ router.get('/:id', async (req, res) => {
   res.json({ ...shape(rows[0]), items, history });
 });
 
-router.post('/', authorize('Engineer', 'Supervisor', 'Administrator'), async (req, res) => {
+router.post('/', authorizeModule('spare_requests', 'manage'), async (req, res) => {
   const b = req.body || {};
   if (!b.workOrderId || !Array.isArray(b.items) || !b.items.length) {
     return res.status(400).json({ error: 'workOrderId and a non-empty items array are required' });
@@ -97,7 +98,7 @@ router.post('/', authorize('Engineer', 'Supervisor', 'Administrator'), async (re
   }
 });
 
-router.post('/:id/actions/:action', authorize('Spare User', 'Administrator'), async (req, res) => {
+router.post('/:id/actions/:action', authorizeModule('spare_fulfillment', 'manage'), async (req, res) => {
   const { action } = req.params;
   const note = req.body?.note;
   if (!note || !note.trim()) return res.status(400).json({ error: 'A note is required' });

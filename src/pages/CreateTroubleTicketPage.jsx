@@ -9,6 +9,14 @@ export const TT_CATEGORIES = [
   'Generator / DG PM', 'Generator Fault', 'Electrical Fault', 'Other',
 ];
 
+// Local (not UTC) "now", formatted for an <input type="datetime-local">   a
+// sensible default for when the fault occurred, still fully editable.
+function nowLocal() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+
 const FieldLabel = ({ children }) => <label className="text-[11px] font-semibold text-slate-600">{children}</label>;
 const TextInput = (props) => <input {...props} className="mt-1 w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" />;
 const ReadOnlyInput = ({ label, value }) => (
@@ -25,7 +33,7 @@ const ReadOnlyInput = ({ label, value }) => (
 export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
   const [sites, setSites] = useState([]);
   const [assets, setAssets] = useState([]);
-  const [f, setF] = useState({ siteId: '', assetId: '', title: '', description: '', priority: 'Medium', category: '' });
+  const [f, setF] = useState({ siteId: '', assetId: '', title: '', description: '', priority: 'Medium', category: '', faultOccurredAt: nowLocal() });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,7 +47,7 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
   }, [f.siteId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (k) => (v) => setF((s) => ({ ...s, [k]: v }));
-  const canSave = f.siteId && f.title && f.description;
+  const canSave = f.siteId && f.title && f.description && f.faultOccurredAt;
 
   const save = async () => {
     setBusy(true); setError('');
@@ -47,6 +55,7 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
       const { id } = await api.troubleTickets.create({
         siteId: Number(f.siteId), assetId: f.assetId ? Number(f.assetId) : null,
         title: f.title, description: f.description, priority: f.priority, category: f.category || null,
+        faultOccurredAt: f.faultOccurredAt,
       });
       onCreated(id);
     } catch (e) {
@@ -101,9 +110,16 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
           </div>
         </div>
 
-        <div className="mt-5">
-          <FieldLabel>System / Fault Type (optional)</FieldLabel>
-          <div className="mt-1"><Select value={f.category} onChange={set('category')} options={TT_CATEGORIES} label="Not categorised" /></div>
+        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-5 mt-5">
+          <div>
+            <FieldLabel>System / Fault Type (optional)</FieldLabel>
+            <div className="mt-1"><Select value={f.category} onChange={set('category')} options={TT_CATEGORIES} label="Not categorised" /></div>
+          </div>
+          <div>
+            <FieldLabel>Fault Occur Time</FieldLabel>
+            <input type="datetime-local" value={f.faultOccurredAt} onChange={(e) => set('faultOccurredAt')(e.target.value)}
+              className="mt-1 w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
         </div>
 
 

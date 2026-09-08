@@ -56,13 +56,18 @@ export function authorize(...roles) {
   };
 }
 
-// A Supervisor may only act within their own region; Administrator, EHS
-// User, Spare User and MS User are unrestricted by region (MS User's
-// restriction is read-only, enforced via authorize() on mutating routes).
+// Only Supervisor and Engineer are region-scoped -- a Supervisor manages
+// their own region, an Engineer is a site-based field role assigned to
+// one region. Every other role (Administrator, EHS User, Spare User, MS
+// User, and any custom role such as "NOC Engineer") is unrestricted by
+// region: a NOC Engineer isn't tied to a single site/region the way a
+// field Engineer is, so it doesn't get a region at all (see Users.jsx's
+// REGION_REQUIRED_ROLES, which mirrors this same list).
 // A route calls this to build its own WHERE-scoping; it returns the
 // region id to filter by, or null for "no region filter".
+const REGION_RESTRICTED_ROLES = ['Supervisor', 'Engineer'];
 export function scopeRegion(req) {
-  if (['Administrator', 'EHS User', 'Spare User', 'MS User'].includes(req.user.role)) {
+  if (!REGION_RESTRICTED_ROLES.includes(req.user.role)) {
     return req.query.region ? Number(req.query.region) : null;
   }
   return req.user.regionId;

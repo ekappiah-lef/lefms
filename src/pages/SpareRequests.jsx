@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Paperclip } from 'lucide-react';
 import { PageHeader, KpiGrid, Kpi, FilterBar, Select, Table, Td, Tr, Badge, Modal, Button, Textarea, FilePicker, AttachmentRow, Pagination, pageSlice } from '../components/ui';
 import { api, uploadsUrl } from '../api/client';
+import { hasPerm } from '../config/platform';
 
 const EVIDENCE_ACCEPT = 'image/*,.pdf,.doc,.docx';
 
@@ -72,7 +73,7 @@ function RequestDetail({ id, user, onClose }) {
   const [files, setFiles] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const canManage = user.role === 'Spare User' || user.role === 'Administrator';
+  const canManage = hasPerm(user, 'spare_fulfillment', 'manage');
 
   const load = () => api.spareRequests.get(id).then(setReq);
   useEffect(() => { load(); }, [id]);

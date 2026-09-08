@@ -13,7 +13,7 @@
 // so the movement is still logged and traceable.
 import { Router } from 'express';
 import { pool } from '../db.js';
-import { authorize } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
 import { sendError } from '../workflow.js';
 
 const router = Router();
@@ -91,10 +91,10 @@ async function directMove(req, res, { type, sign }) {
 }
 
 // Send a spare directly to a site, with no Spare Request behind it.
-router.post('/direct-issue', authorize('Spare User', 'Administrator'), (req, res) => directMove(req, res, { type: 'Direct Issue', sign: -1 }));
+router.post('/direct-issue', authorizeModule('spare_transactions', 'manage'), (req, res) => directMove(req, res, { type: 'Direct Issue', sign: -1 }));
 
 // Receive a spare back from a site (e.g. the old part after a bypassed
 // swap), with no Spare Request behind it.
-router.post('/direct-return', authorize('Spare User', 'Administrator'), (req, res) => directMove(req, res, { type: 'Direct Return', sign: 1 }));
+router.post('/direct-return', authorizeModule('spare_transactions', 'manage'), (req, res) => directMove(req, res, { type: 'Direct Return', sign: 1 }));
 
 export default router;

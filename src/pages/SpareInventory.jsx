@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import { PageHeader, FilterBar, Select, Table, Td, Tr, Badge, Modal, Button, Field, FilePicker, Pagination, pageSlice } from '../components/ui';
 import { api } from '../api/client';
+import { hasPerm } from '../config/platform';
 
 const CATEGORIES = ['Power', 'Electrical', 'Cooling', 'Other'];
 
@@ -15,7 +16,7 @@ export default function SpareInventory({ user }) {
   const [showImport, setShowImport] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const canManage = user.role === 'Administrator' || user.role === 'Spare User';
+  const canManage = hasPerm(user, 'spare_inventory', 'manage');
 
   const refresh = useCallback(() => {
     setLoading(true);

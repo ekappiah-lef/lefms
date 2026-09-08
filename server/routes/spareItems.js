@@ -8,6 +8,7 @@ import multer from 'multer';
 import ExcelJS from 'exceljs';
 import { pool } from '../db.js';
 import { authorize } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
 import { sendError } from '../workflow.js';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -45,7 +46,7 @@ router.get('/:id', async (req, res) => {
   });
 });
 
-router.post('/', authorize('Administrator', 'Spare User'), async (req, res) => {
+router.post('/', authorizeModule('spare_inventory', 'manage'), async (req, res) => {
   const b = req.body || {};
   if (!b.sku || !b.name) return res.status(400).json({ error: 'sku and name are required' });
   try {
@@ -60,7 +61,7 @@ router.post('/', authorize('Administrator', 'Spare User'), async (req, res) => {
   }
 });
 
-router.put('/:id', authorize('Administrator', 'Spare User'), async (req, res) => {
+router.put('/:id', authorizeModule('spare_inventory', 'manage'), async (req, res) => {
   const b = req.body || {};
   const fields = { name: b.name, category: b.category, unit: b.unit, unit_cost: b.unitCost, reorder_level: b.reorderLevel, store_location: b.storeLocation, is_active: b.isActive !== undefined ? (b.isActive ? 1 : 0) : undefined };
   const sets = []; const params = [];
@@ -74,7 +75,7 @@ router.put('/:id', authorize('Administrator', 'Spare User'), async (req, res) =>
 // Restock: the one place quantity_on_hand is adjusted directly by a
 // user rather than via an Issue/Return against a request   still logged
 // as a ledger row for traceability.
-router.post('/:id/restock', authorize('Administrator', 'Spare User'), async (req, res) => {
+router.post('/:id/restock', authorizeModule('spare_inventory', 'manage'), async (req, res) => {
   const qty = Number(req.body?.qty);
   if (!qty || qty <= 0) return res.status(400).json({ error: 'A positive qty is required' });
   const conn = await pool.getConnection();
@@ -108,7 +109,7 @@ router.delete('/:id', authorize('Administrator'), async (req, res) => {
 // Bulk import via Excel. Columns: SKU | Name | Category | Unit | Unit Cost
 // | Reorder Level | Quantity On Hand | Store Location. Validates every
 // row (no duplicate SKU) before inserting anything.
-router.post('/bulk-import', authorize('Administrator', 'Spare User'), upload.single('file'), async (req, res) => {
+router.post('/bulk-import', authorizeModule('spare_inventory', 'manage'), upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'An Excel file is required' });
   const workbook = new ExcelJS.Workbook();
   try {

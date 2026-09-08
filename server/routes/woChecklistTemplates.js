@@ -4,6 +4,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { authorize } from '../auth.js';
+import { authorizeModule } from '../permissions.js';
 
 const router = Router();
 
@@ -13,14 +14,14 @@ router.get('/', async (req, res) => {
   res.json(rows.map((r) => ({ id: r.id, question: r.question, sortOrder: r.sort_order, isActive: !!r.is_active })));
 });
 
-router.post('/', authorize('Administrator'), async (req, res) => {
+router.post('/', authorizeModule('wo_checklist', 'manage'), async (req, res) => {
   const { question, sortOrder } = req.body || {};
   if (!question) return res.status(400).json({ error: 'question is required' });
   const [r] = await pool.query('INSERT INTO wo_checklist_templates (question, sort_order) VALUES (?, ?)', [question, sortOrder || 0]);
   res.status(201).json({ id: r.insertId });
 });
 
-router.put('/:id', authorize('Administrator'), async (req, res) => {
+router.put('/:id', authorizeModule('wo_checklist', 'manage'), async (req, res) => {
   const { question, sortOrder, isActive } = req.body || {};
   const sets = []; const params = [];
   if (question !== undefined) { sets.push('question = ?'); params.push(question); }

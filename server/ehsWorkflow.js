@@ -81,7 +81,7 @@ export async function submitEhs(id, user, note, checklistResponses) {
 export async function reviewEhs(id, user, note, outcome) {
   if (!note || !note.trim()) throw new WorkflowError('A note describing the review is required', 400);
   if (!['Approved', 'Flagged'].includes(outcome)) throw new WorkflowError('outcome must be Approved or Flagged', 400);
-  if (user.role !== 'Administrator' && user.role !== 'EHS User') throw new WorkflowError('Only an EHS User or Administrator can review EHS', 403);
+  if (user.role !== 'Administrator' && !(await hasPermission(user, 'ehs', 'manage'))) throw new WorkflowError('You do not have permission to review EHS records', 403);
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();

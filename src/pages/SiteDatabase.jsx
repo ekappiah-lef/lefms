@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { MapPin, Plus, CheckCircle2, XCircle } from 'lucide-react';
 import { PageHeader, KpiGrid, Kpi, FilterBar, Select, Table, Td, Tr, Badge, Modal, Button, Field, FilePicker, Pagination, pageSlice } from '../components/ui';
 import { api } from '../api/client';
+import { hasPerm } from '../config/platform';
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
 const PRIORITY_TONE = { Low: 'slate', Medium: 'blue', High: 'amber', Critical: 'red' };
@@ -20,7 +21,7 @@ export default function SiteDatabase({ user }) {
   const [showImport, setShowImport] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const canManage = user.role === 'Administrator';
+  const canManage = hasPerm(user, 'site_database', 'manage');
 
   const refresh = useCallback(() => {
     setLoading(true);

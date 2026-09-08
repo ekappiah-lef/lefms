@@ -26,6 +26,7 @@ const SELECT = `
   SELECT t.id, t.tt_no, t.title, t.description, t.priority, t.status,
          t.site_id, t.site_code, t.site_name, t.region_id, t.region_name, t.site_location, t.site_priority,
          t.asset_id, a.name AS asset_name, a.tag AS asset_tag, t.category,
+         t.fault_occurred_at, t.fault_resolved_at,
          t.created_by, cu.full_name AS created_by_name,
          t.created_at, t.closed_at, t.closed_by, bu.full_name AS closed_by_name,
          t.work_order_id, w.wo_no, w.status AS wo_status
@@ -57,8 +58,8 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', authorizeModule('trouble_tickets', 'manage'), async (req, res) => {
   const b = req.body || {};
-  if (!b.siteId || !b.title || !b.description) {
-    return res.status(400).json({ error: 'siteId, title and description are required' });
+  if (!b.siteId || !b.title || !b.description || !b.faultOccurredAt) {
+    return res.status(400).json({ error: 'siteId, title, description and faultOccurredAt are required' });
   }
   const conn = await pool.getConnection();
   try {
@@ -72,10 +73,10 @@ router.post('/', authorizeModule('trouble_tickets', 'manage'), async (req, res) 
     const [r] = await conn.query(
       `INSERT INTO trouble_tickets
          (tt_no, site_id, site_code, site_name, region_id, region_name, site_location, site_priority,
-          asset_id, category, title, description, priority, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          asset_id, category, fault_occurred_at, title, description, priority, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [placeholderTicketNo(), site.id, site.site_code, site.name, site.region_id, site.region_name, site.location, site.priority,
-       b.assetId || null, b.category || null, b.title, b.description, b.priority || 'Medium', req.user.id]
+       b.assetId || null, b.category || null, b.faultOccurredAt, b.title, b.description, b.priority || 'Medium', req.user.id]
     );
     const ttId = r.insertId;
     const ttNo = await finalizeTicketNo(conn, 'trouble_tickets', 'tt_no', 'TT', ttId);
@@ -100,6 +101,7 @@ router.post('/:id/actions/:action', authorizeModule('trouble_tickets', 'manage')
   const { action } = req.params;
   const note = req.body?.note;
   if (!note || !note.trim()) return res.status(400).json({ error: 'A note is required' });
+  if (action === 'complete' && !req.body?.faultResolvedAt) return res.status(400).json({ error: 'faultResolvedAt is required to complete a trouble ticket' });
 
   const conn = await pool.getConnection();
   try {
@@ -140,6 +142,7 @@ router.post('/:id/actions/:action', authorizeModule('trouble_tickets', 'manage')
 
     const sets = ['status = ?']; const params = [rule.to];
     if (rule.to === 'CLOSED') { sets.push('closed_at = NOW()', 'closed_by = ?'); params.push(req.user.id); }
+    if (action === 'complete') { sets.push('fault_resolved_at = ?'); params.push(req.body.faultResolvedAt); }
     params.push(t.id);
     await conn.query(`UPDATE trouble_tickets SET ${sets.join(', ')} WHERE id = ?`, params);
 
@@ -210,6 +213,7 @@ function shape(t) {
     siteId: t.site_id, siteCode: t.site_code, siteName: t.site_name,
     regionId: t.region_id, regionName: t.region_name, siteLocation: t.site_location, sitePriority: t.site_priority,
     assetId: t.asset_id, assetName: t.asset_name, assetTag: t.asset_tag, category: t.category,
+    faultOccurredAt: t.fault_occurred_at, faultResolvedAt: t.fault_resolved_at,
     createdBy: t.created_by, createdByName: t.created_by_name, createdAt: t.created_at,
     closedAt: t.closed_at, closedBy: t.closed_by, closedByName: t.closed_by_name,
     workOrderId: t.work_order_id, woNo: t.wo_no, woStatus: t.wo_status,

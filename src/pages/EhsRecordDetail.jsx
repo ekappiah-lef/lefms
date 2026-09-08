@@ -41,7 +41,7 @@ export default function EhsRecordDetail({ id, user, onBack }) {
 
   const isAssignedEngineer = hasPerm(user, 'work_orders', 'manage') && Number(user.id) === Number(ehs.engineerId);
   const canSubmit = ehs.status === 'PENDING' && (isAssignedEngineer || user.role === 'Administrator');
-  const canReview = ehs.status === 'SUBMITTED' && (user.role === 'EHS User' || user.role === 'Administrator');
+  const canReview = ehs.status === 'SUBMITTED' && hasPerm(user, 'ehs', 'manage');
 
   const uploadFile = async (file) => {
     setBusy(true);

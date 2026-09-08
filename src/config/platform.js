@@ -15,14 +15,14 @@ export const MODULES = [
 
   { id: 'work-orders', label: 'All Work Orders', group: 'Work Orders', perm: { module: 'work_orders', level: 'view' }, page: 'work-orders' },
 
-  { id: 'ehs-work-orders', label: 'EHS Work Orders', group: 'EHS', roles: ['Administrator', 'EHS User', 'Engineer', 'Supervisor', 'MS User'], page: 'ehs-work-orders' },
+  { id: 'ehs-work-orders', label: 'EHS Work Orders', group: 'EHS', perm: { module: 'ehs', level: 'view' }, page: 'ehs-work-orders' },
 
-  { id: 'spare-requests', label: 'Spare Requests', group: 'Spare Parts', roles: ['Administrator', 'Spare User', 'Engineer', 'Supervisor', 'MS User'], page: 'spare-requests' },
-  { id: 'spare-transactions', label: 'Spare Returns', group: 'Spare Parts', roles: ['Administrator', 'Spare User', 'MS User'], page: 'spare-transactions' },
-  { id: 'spare-inventory', label: 'Add / Update Inventory', group: 'Spare Parts', roles: ['Administrator', 'Spare User'], page: 'spare-inventory' },
+  { id: 'spare-requests', label: 'Spare Requests', group: 'Spare Parts', perm: [{ module: 'spare_requests', level: 'view' }, { module: 'spare_fulfillment', level: 'view' }], page: 'spare-requests' },
+  { id: 'spare-transactions', label: 'Spare Returns', group: 'Spare Parts', perm: { module: 'spare_transactions', level: 'view' }, page: 'spare-transactions' },
+  { id: 'spare-inventory', label: 'Add / Update Inventory', group: 'Spare Parts', perm: { module: 'spare_inventory', level: 'view' }, page: 'spare-inventory' },
 
-  { id: 'site-database', label: 'Sites', group: 'Site Database', roles: ['Administrator', 'MS User'], page: 'site-database' },
-  { id: 'assets', label: 'Assets', group: 'Site Database', roles: '*', page: 'assets' },
+  { id: 'site-database', label: 'Sites', group: 'Site Database', perm: { module: 'site_database', level: 'view' }, page: 'site-database' },
+  { id: 'assets', label: 'Assets', group: 'Site Database', perm: { module: 'assets', level: 'view' }, page: 'assets' },
 
   { id: 'reports', label: 'Work Order Reports', group: 'Reports', perm: { module: 'wo_reports', level: 'view' }, page: 'reports' },
   { id: 'tt-reports', label: 'Trouble Ticket Reports', group: 'Reports', perm: { module: 'tt_reports', level: 'view' }, page: 'tt-reports' },
@@ -33,10 +33,13 @@ export const MODULES = [
   { id: 'admin-sms-groups', label: 'SMS Groups', group: 'SMS', perm: { module: 'sms', level: 'view' }, page: 'admin-sms-groups' },
   { id: 'admin-sms-config', label: 'SMS Config', group: 'SMS', perm: { module: 'sms', level: 'view' }, page: 'admin-sms-config' },
 
+  // Users and Roles stay Administrator-only, full stop -- not configurable
+  // from the Roles page. Letting any other role manage users/roles would
+  // be a privilege-escalation path (a role could grant itself more access).
   { id: 'admin-users', label: 'Users', group: 'Administration', roles: ['Administrator'], page: 'admin-users' },
   { id: 'admin-roles', label: 'Roles', group: 'Administration', roles: ['Administrator'], page: 'admin-roles' },
-  { id: 'admin-wo-checklist', label: 'PM Checklist', group: 'Administration', roles: ['Administrator'], page: 'admin-wo-checklist' },
-  { id: 'admin-ehs-checklist', label: 'EHS Checklist', group: 'Administration', roles: ['Administrator', 'EHS User'], page: 'admin-ehs-checklist' },
+  { id: 'admin-wo-checklist', label: 'PM Checklist', group: 'Administration', perm: { module: 'wo_checklist', level: 'view' }, page: 'admin-wo-checklist' },
+  { id: 'admin-ehs-checklist', label: 'EHS Checklist', group: 'Administration', perm: { module: 'ehs_checklist', level: 'view' }, page: 'admin-ehs-checklist' },
 ];
 
 export const NAV_GROUP_ORDER = ['Trouble Tickets', 'Work Orders', 'EHS', 'Spare Parts', 'Site Database', 'Reports', 'SMS', 'Administration'];
@@ -57,7 +60,13 @@ export function canAccess(user, moduleId) {
   const m = MODULES.find((x) => x.id === moduleId);
   if (!m) return false;
   if (user.role === 'Administrator') return true;
-  if (m.perm) return hasPerm(user, m.perm.module, m.perm.level);
+  if (m.perm) {
+    // A page can be gated by more than one permission module (e.g. Spare
+    // Requests is either "raise/track" or "approve/issue" -- either one
+    // is enough to see the page at all).
+    const perms = Array.isArray(m.perm) ? m.perm : [m.perm];
+    return perms.some((p) => hasPerm(user, p.module, p.level));
+  }
   if (m.roles === '*') return true;
   return m.roles.includes(user.role);
 }

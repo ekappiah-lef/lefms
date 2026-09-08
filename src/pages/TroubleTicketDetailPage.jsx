@@ -15,6 +15,16 @@ function fmtShort(dt) {
   const p = (n) => String(n).padStart(2, '0');
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
+function fmtDateTime(dt) {
+  if (!dt) return ' ';
+  return new Date(dt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+// Local (not UTC) "now", formatted for an <input type="datetime-local">.
+function nowLocal() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
 
 // Trouble Ticket detail: same "one card, details + inline action" layout
 // as a Work Order, but with no EHS or Spare Parts side cards   those only
@@ -32,6 +42,7 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
   const [nextDue, setNextDue] = useState('');
   const [plannedDate, setPlannedDate] = useState('');
   const [newEngineer, setNewEngineer] = useState('');
+  const [faultResolvedAt, setFaultResolvedAt] = useState(nowLocal());
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
 
@@ -48,12 +59,12 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
 
   const openAction = (v) => {
     setActiveAction(v);
-    setNote(''); setNewEngineer(''); setWoType('CM'); setNextDue(''); setPlannedDate(''); setActionError('');
+    setNote(''); setNewEngineer(''); setWoType('CM'); setNextDue(''); setPlannedDate(''); setFaultResolvedAt(nowLocal()); setActionError('');
   };
 
   const canSubmit = activeAction === 'create_wo'
     ? newEngineer && (woType !== 'PM' || nextDue) && (woType !== 'PLM' || plannedDate)
-    : note.trim().length > 0;
+    : note.trim().length > 0 && (activeAction !== 'complete' || faultResolvedAt);
 
   const submit = async () => {
     setBusy(true); setActionError('');
@@ -65,7 +76,7 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
         });
         onOpenWorkOrder(woId);
       } else {
-        await api.troubleTickets.action(id, activeAction, { note });
+        await api.troubleTickets.action(id, activeAction, { note, ...(activeAction === 'complete' ? { faultResolvedAt } : {}) });
         setActiveAction(''); load();
       }
     } catch (e) {
@@ -97,6 +108,8 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
             <Field label="Priority" value={<Badge value={ticket.priority} />} />
             {ticket.category && <Field label="System / Fault Type" value={ticket.category} />}
             <Field label="Created By" value={ticket.createdByName} />
+            <Field label="Fault Occur Time" value={fmtDateTime(ticket.faultOccurredAt)} />
+            {ticket.faultResolvedAt && <Field label="Fault Resolution Time" value={fmtDateTime(ticket.faultResolvedAt)} />}
           </div>
 
           <div className="mt-6">
@@ -148,6 +161,14 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
                     </div>
                   )}
 
+                  {activeAction === 'complete' && (
+                    <div className="max-w-lg mx-auto mb-4">
+                      <label className="text-[11px] font-semibold text-slate-600">Fault Resolution Time <span className="text-red-500">*</span></label>
+                      <input type="datetime-local" value={faultResolvedAt} onChange={(e) => setFaultResolvedAt(e.target.value)}
+                        className="mt-1 w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" />
+                    </div>
+                  )}
+
                   {activeAction !== 'create_wo' && (
                     <div className="max-w-lg mx-auto">
                       <label className="text-[11px] font-semibold text-slate-600">Update {activeAction !== 'update' ? '/ reason' : ''} <span className="text-red-500">*</span></label>
@@ -158,7 +179,7 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
                   <div className="flex justify-center gap-2 mt-5">
                     <Button onClick={submit} disabled={!canSubmit || busy}>{busy ? 'Working…' : activeAction === 'create_wo' ? 'Create Work Order' : activeAction[0].toUpperCase() + activeAction.slice(1)}</Button>
 
-                    <Button variant="ghost" onClick={() => setActiveAction('')}>Cancel</Button>
+                    <Button variant="ghost" onClick={() => setActiveAction('')}>Back</Button>
                   </div>
                 </div>
               )}

@@ -166,7 +166,7 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
 
                   <div className="flex justify-center gap-2 mt-5">
                     <Button onClick={submit} disabled={!canSubmit || busy}>{busy ? 'Working…' : activeAction.label}</Button>
-                    <Button variant="ghost" onClick={() => setActiveAction(null)}>Cancel</Button>
+                    <Button variant="ghost" onClick={() => setActiveAction(null)}>Back</Button>
                   </div>
                 </div>
               )}

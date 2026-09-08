@@ -11,9 +11,9 @@ const LEVEL_OPTIONS = [
 
 // Roles are named bundles of module permissions   the 6 built-in roles
 // (System) plus whatever custom ones an Administrator creates here (e.g.
-// "NOC Engineer"). EHS, Spare Parts, Site Database and this Users/Roles
-// admin area itself aren't in this list yet: they still follow their own
-// fixed role checks, so a custom role never gets access to those.
+// "NOC Engineer"). Every page in the app is governed by this except the
+// Users and Roles admin pages themselves, which stay Administrator-only
+// by design (a role should never be able to grant itself more access).
 export default function Roles() {
   const [roles, setRoles] = useState([]);
   const [modules, setModules] = useState([]);
@@ -35,7 +35,7 @@ export default function Roles() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Roles" subtitle="What each role can access   Trouble Tickets, Work Orders, Reports and SMS"
+      <PageHeader title="Roles" subtitle="What each role can see and do, page by page   click a role to configure it"
         actions={<Button icon={Plus} onClick={() => setShowNew(true)}>New Role</Button>} />
 
       <Table headers={['Role', 'Type', '']} empty={loading ? 'Loading…' : 'No roles found'}>
@@ -107,8 +107,15 @@ function EditPermissions({ role, modules, onClose, onSaved }) {
     }
   };
 
+  const groups = [];
+  for (const m of modules) {
+    let g = groups.find((x) => x.name === m.group);
+    if (!g) { g = { name: m.group, items: [] }; groups.push(g); }
+    g.items.push(m);
+  }
+
   return (
-    <Modal open onClose={onClose} title={role.name} subtitle={role.isSystem ? 'Built-in role' : 'Custom role'} width="max-w-xl"
+    <Modal open onClose={onClose} title={role.name} subtitle={role.isSystem ? 'Built-in role' : 'Custom role'} width="max-w-2xl"
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={!perms || busy || isAdministrator}>{busy ? 'Saving…' : 'Save Permissions'}</Button></>}>
       {error && <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>}
 
@@ -118,16 +125,22 @@ function EditPermissions({ role, modules, onClose, onSaved }) {
       {isMsUser && !isAdministrator && (
         <p className="text-[13px] text-slate-500 mb-4 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">MS User is always read-only   "Manage" isn't available for this role.</p>
       )}
-      <p className="text-[12px] text-slate-400 mb-4">EHS, Spare Parts, Site Database and Users/Roles administration aren't configurable per role yet   access to those still follows their own fixed roles.</p>
 
       {!perms || isAdministrator ? null : (
-        <div className="space-y-2.5">
-          {modules.map((m) => (
-            <div key={m.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2.5">
-              <span className="text-[13px] font-medium text-slate-700">{m.label}</span>
-              <div className="w-40">
-                <Select value={perms[m.id] || ''} onChange={(v) => setLevel(m.id, v)}
-                  options={isMsUser ? LEVEL_OPTIONS.filter((o) => o.value !== 'manage') : LEVEL_OPTIONS} />
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+          {groups.map((g) => (
+            <div key={g.name}>
+              <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5">{g.name}</div>
+              <div className="space-y-2">
+                {g.items.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2.5">
+                    <span className="text-[13px] font-medium text-slate-700">{m.label}</span>
+                    <div className="w-40">
+                      <Select value={perms[m.id] || ''} onChange={(v) => setLevel(m.id, v)}
+                        options={isMsUser ? LEVEL_OPTIONS.filter((o) => o.value !== 'manage') : LEVEL_OPTIONS} />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}

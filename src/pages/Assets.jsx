@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import { PageHeader, FilterBar, Select, Table, Td, Tr, Badge, Modal, Button, Field, Pagination, pageSlice } from '../components/ui';
 import { api } from '../api/client';
+import { hasPerm } from '../config/platform';
 
 const STATUSES = ['Operational', 'Under Maintenance', 'Out of Service', 'Retired'];
 const STATUS_TONE = { Operational: 'green', 'Under Maintenance': 'amber', 'Out of Service': 'red', Retired: 'slate' };
@@ -17,7 +18,7 @@ export default function Assets({ user }) {
   const [showNew, setShowNew] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const canManage = user.role === 'Administrator' || user.role === 'Supervisor';
+  const canManage = hasPerm(user, 'assets', 'manage');
 
   const refresh = useCallback(() => {
     setLoading(true);
