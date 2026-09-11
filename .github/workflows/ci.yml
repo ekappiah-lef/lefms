@@ -1,10 +1,4 @@
 name: LEF MS CI
-
-# Validates every push/PR to main: lint + real tests for both the
-# frontend (Vitest) and backend (node --test), a production frontend
-# build, and a build-only check that both Docker images still build.
-# Nothing here pushes an image or touches the deploy server   see cd.yml
-# for that, which only runs once this workflow succeeds.
 on:
   push:
     branches: [main]

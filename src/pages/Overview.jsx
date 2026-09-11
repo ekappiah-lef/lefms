@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  LabelList, PieChart, Pie, Cell,
 } from 'recharts';
 import { ListChecks, Wrench, CheckCircle2, Lock, AlertTriangle, Clock, CalendarClock } from 'lucide-react';
 import { PageHeader, KpiGrid, Kpi, SectionCard, Table, Tr, Td, Badge } from '../components/ui';
@@ -100,20 +101,25 @@ export default function Overview({ user }) {
         </SectionCard>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
-        <SectionCard title="Trouble Ticket Issues by Data Centre" className="lg:col-span-2">
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={ttBySite} margin={{ left: -18, right: 10 }}>
+      <div className="grid lg:grid-cols-1 gap-4">
+        <SectionCard title="Trouble Ticket Issues by Data Centre">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={ttBySite} margin={{ left: -18, right: 10, top: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
               <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" />
               <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
               <Tooltip />
-              <Bar dataKey="count" name="Issues" fill={NAVY} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="count" name="Issues" fill={NAVY} radius={[3, 3, 0, 0]}>
+                <LabelList dataKey="count" position="top" style={{ fontSize: 12, fontWeight: 700, fill: '#334155' }} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
+      </div>
 
+      <div className="grid lg:grid-cols-2 gap-4">
         <DonutBreakdown title="Issues by System / Fault Type" data={ttByCategory} totalLabel="Trouble Tickets" />
+        <LabeledPieChart title="Issues by System / Fault Type" data={ttByCategory} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
@@ -165,5 +171,44 @@ export default function Overview({ user }) {
         </SectionCard>
       </div>
     </div>
+  );
+}
+
+// Centers the value inside each wedge (Recharts' default `label` position
+// sits outside the slice with a leader line) -- radius 60% of the way out
+// from the centre reads clearly on both small and large slices alike.
+function renderSliceValue({ cx, cy, midAngle, innerRadius, outerRadius, value }) {
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return (
+    <text x={x} y={y} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={700}>
+      {value}
+    </text>
+  );
+}
+
+// Same data as DonutBreakdown, drawn as a plain pie (no centre hole) with
+// the count printed directly on each slice   always visible, no hover
+// needed, matching the spreadsheet-chart look this is meant to mirror.
+function LabeledPieChart({ title, data }) {
+  const filtered = data.filter((d) => d.value > 0);
+  return (
+    <SectionCard title={title}>
+      {filtered.length === 0 ? (
+        <p className="text-sm text-slate-400 py-8 text-center">No data yet.</p>
+      ) : (
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie data={filtered} dataKey="value" nameKey="name" cx="50%" cy="46%" outerRadius={95} label={renderSliceValue} labelLine={false}>
+              {filtered.map((d) => <Cell key={d.name} fill={d.color} stroke="#fff" strokeWidth={2} />)}
+            </Pie>
+            <Tooltip />
+            <Legend verticalAlign="bottom" wrapperStyle={{ fontSize: 11 }} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+    </SectionCard>
   );
 }

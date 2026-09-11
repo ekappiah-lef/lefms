@@ -1,33 +1,11 @@
 name: LEF MS CD
 
-# Runs only after "LEF MS CI" succeeds on main (lint + tests + build +
-# Docker build-check all passed). Builds & pushes both images to GHCR
-# tagged with the commit SHA, then SSHes into the deploy server to pull
-# and run them via docker-compose.yml   the server never needs the
-# source repo built on it, just the compose file and a git checkout for
-# that file (and database/schema.sql, mounted into the db service).
-#
-# Required repo secrets (Settings -> Secrets and variables -> Actions):
-#   DEPLOY_HOST       server hostname or IP
-#   DEPLOY_USER       SSH user (e.g. ubuntu)
-#   DEPLOY_SSH_KEY    private key matching a public key on the server
-#   DEPLOY_PATH       absolute path to the git checkout on the server
-#                      (e.g. /home/ubuntu/lefms)
-#   DEPLOY_PORT       SSH port, only needed if not 22
-#   HEALTH_CHECK_URL  a URL the deployed app should answer 200 on
-#                      (e.g. https://your-domain.example or
-#                      http://localhost/api/health if no domain yet)
-#   DB_ROOT_PASSWORD, DB_PASSWORD, JWT_SECRET, SMS_API_KEY, SMS_SENDER_ID
-#                      same values as your server's .env   only needed
-#                      once (see the "first-time server setup" note
-#                      below); GitHub Actions never reads them for
-#                      anything other than optionally seeding that file.
 on:
   workflow_run:
     workflows: ["LEF MS CI"]
     types: [completed]
     branches: [main]
-  workflow_dispatch: {} # manual "Run workflow" button, e.g. to redeploy without a new commit
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -42,10 +20,7 @@ jobs:
       image_tag: ${{ steps.vars.outputs.image_tag }}
       repo_lc: ${{ steps.vars.outputs.repo_lc }}
     steps:
-      # workflow_run doesn't auto-checkout the commit CI just validated
-      # (it defaults to main's current tip)   pin explicitly, or a commit
-      # landing between CI finishing and CD starting would silently ship
-      # something CI never actually tested.
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -65,9 +40,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Path-style tags (ghcr.io/<owner>/<repo>/backend) so REGISTRY in
-      # docker-compose.yml (ghcr.io/<owner>/<repo>) plus its own
-      # `/backend` and `/frontend` suffixes resolve to exactly these.
       - name: Build & push backend
         uses: docker/build-push-action@v6
         with:
