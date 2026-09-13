@@ -101,21 +101,55 @@ export default function Overview({ user }) {
         </SectionCard>
       </div>
 
-      <div className="grid lg:grid-cols-1 gap-4">
-        <SectionCard title="Trouble Ticket Issues by Data Centre">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={ttBySite} margin={{ left: -18, right: 10, top: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="count" name="Issues" fill={NAVY} radius={[3, 3, 0, 0]}>
-                <LabelList dataKey="count" position="top" style={{ fontSize: 12, fontWeight: 700, fill: '#334155' }} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </SectionCard>
-      </div>
+    <div className="grid lg:grid-cols-1 gap-4">
+  <SectionCard title="Trouble Ticket Issues by Data Centre">
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart
+        data={ttBySite}
+        margin={{ left: -18, right: 10, top: 20 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+
+        <XAxis
+          dataKey="name"
+          tick={{ fontSize: 11 }}
+          stroke="#94a3b8"
+        />
+
+        <YAxis
+          tick={{ fontSize: 11 }}
+          stroke="#94a3b8"
+          allowDecimals={false}
+        />
+
+        <Tooltip />
+
+        <Bar
+          dataKey="count"
+          name="Issues"
+          radius={[3, 3, 0, 0]}
+        >
+          {ttBySite.map((entry, index) => (
+            <Cell
+              key={`cell-${entry.name}-${index}`}
+              fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+            />
+          ))}
+
+          <LabelList
+            dataKey="count"
+            position="top"
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              fill: '#334155'
+            }}
+          />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </SectionCard>
+</div>
 
       <div className="grid lg:grid-cols-2 gap-4">
         <DonutBreakdown title="Issues by System / Fault Type" data={ttByCategory} totalLabel="Trouble Tickets" />
