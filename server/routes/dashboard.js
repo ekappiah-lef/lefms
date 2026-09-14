@@ -161,6 +161,31 @@ router.get('/trouble-tickets', async (req, res) => {
   );
   const bySite = bySiteRows.map((r) => ({ siteId: r.site_id, siteCode: r.site_code, siteName: r.site_name, count: r.c }));
 
+// Open / Closed Trouble Tickets by Data Centre
+const [bySiteStatusRows] = await pool.query(
+  `SELECT
+      t.site_id,
+      t.site_code,
+      t.site_name,
+      SUM(CASE WHEN t.status = 'OPEN' THEN 1 ELSE 0 END) AS open,
+      SUM(CASE WHEN t.status = 'CLOSED' THEN 1 ELSE 0 END) AS closed
+   FROM trouble_tickets t
+   ${where}
+   GROUP BY t.site_id, t.site_code, t.site_name
+   ORDER BY t.site_code`,
+  params
+);
+
+const bySiteStatus = bySiteStatusRows.map((r) => ({
+  siteId: r.site_id,
+  siteCode: r.site_code,
+  siteName: r.site_name,
+  open: Number(r.open),
+  closed: Number(r.closed),
+}));
+
+
+
   const [byCategoryRows] = await pool.query(
     `SELECT COALESCE(t.category, 'Uncategorised') AS category, COUNT(*) c FROM trouble_tickets t ${where} GROUP BY category ORDER BY c DESC`, params
   );
@@ -168,7 +193,7 @@ router.get('/trouble-tickets', async (req, res) => {
 
   const [[{ total }]] = await pool.query(`SELECT COUNT(*) total FROM trouble_tickets t ${where}`, params);
 
-  res.json({ total, bySite, byCategory });
+  res.json({ total, bySite, bySiteStatus, byCategory });
 });
 
 router.get('/spares', async (req, res) => {

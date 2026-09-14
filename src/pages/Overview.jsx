@@ -30,6 +30,11 @@ export default function Overview({ user }) {
   if (!data) return <p className="text-sm text-slate-400">Loading…</p>;
 
   const ttBySite = (ttData?.bySite || []).map((s) => ({ name: s.siteName, count: s.count }));
+  const ttBySiteStatus = (ttData?.bySiteStatus || []).map((s) => ({
+  name: s.siteName,
+  open: s.open,
+  closed: s.closed,
+}));
   const ttByCategory = (ttData?.byCategory || []).map((c, i) => ({ name: c.category, value: c.count, color: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }));
 
   const statusDonut = Object.entries(data.combinedStatus).map(([k, v]) => ({ name: STATUS_LABELS[k], value: v, color: STATUS_COLORS[k] }));
@@ -101,7 +106,7 @@ export default function Overview({ user }) {
         </SectionCard>
       </div>
 
-    <div className="grid lg:grid-cols-1 gap-4">
+   <div className="grid lg:grid-cols-2 gap-4">
   <SectionCard title="Trouble Ticket Issues by Data Centre">
     <ResponsiveContainer width="100%" height={280}>
       <BarChart
@@ -149,6 +154,67 @@ export default function Overview({ user }) {
       </BarChart>
     </ResponsiveContainer>
   </SectionCard>
+  <SectionCard title="Open / Closed Trouble Tickets by Data Centre">
+  <ResponsiveContainer width="100%" height={280}>
+    <BarChart
+      data={ttBySiteStatus}
+      margin={{ left: -18, right: 10, top: 20 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+
+      <XAxis
+        dataKey="name"
+        tick={{ fontSize: 11 }}
+        stroke="#94a3b8"
+      />
+
+      <YAxis
+        tick={{ fontSize: 11 }}
+        stroke="#94a3b8"
+        allowDecimals={false}
+      />
+
+      <Tooltip />
+
+      <Legend wrapperStyle={{ fontSize: 11 }} />
+
+      <Bar
+        dataKey="open"
+        name="Open"
+        fill="#f59e0b"
+        radius={[3, 3, 0, 0]}
+      >
+        <LabelList
+          dataKey="open"
+          position="top"
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            fill: '#334155'
+          }}
+        />
+      </Bar>
+
+      <Bar
+        dataKey="closed"
+        name="Closed"
+        fill="#10b981"
+        radius={[3, 3, 0, 0]}
+      >
+        <LabelList
+          dataKey="closed"
+          position="top"
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            fill: '#334155'
+          }}
+        />
+      </Bar>
+
+    </BarChart>
+  </ResponsiveContainer>
+</SectionCard>
 </div>
 
       <div className="grid lg:grid-cols-2 gap-4">

@@ -99,8 +99,8 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
           <div className="mt-1"><Textarea   value={f.description} onChange={set('description')} rows={5} placeholder="Description of Issue…" /></div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-5 mt-5">
-          <div>
+<div className="grid sm:grid-cols-[7fr_3fr] gap-x-8 gap-y-5 mt-5">     
+       <div>
             <FieldLabel>Asset (Generator / AC)</FieldLabel>
             <div className="mt-1"><Select value={f.assetId} onChange={set('assetId')} options={assets.map((a) => ({ value: String(a.id), label: `${a.tag}   ${a.name}` }))} label="No specific asset" /></div>
           </div>
