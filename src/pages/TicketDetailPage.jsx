@@ -36,12 +36,25 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
   const [checklistDraft, setChecklistDraft] = useState({});
   const [file, setFile] = useState(null);
   const [completionFiles, setCompletionFiles] = useState([]);
+  const [workOrderAttachments, setWorkOrderAttachments] = useState([]);
   const [galleryIndex, setGalleryIndex] = useState(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
   const [showSpareModal, setShowSpareModal] = useState(false);
 
-  const load = useCallback(() => { api.workOrders.get(id).then(setTicket).catch((e) => setError(e.message)); }, [id]);
+  const load = useCallback(async () => {
+    try {
+      const [detail, attachments] = await Promise.all([
+        api.workOrders.get(id),
+        api.attachments.list('work_order', id),
+      ]);
+      setTicket(detail);
+      setWorkOrderAttachments(attachments || []);
+      setError('');
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [id]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { api.users.engineers().then(setEngineers); }, []);
 
@@ -88,9 +101,8 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
   const canSubmit = (NO_NOTE_ACTIONS.includes(activeAction?.action) || note.trim()) && (!activeAction?.engineerRequired || newEngineer);
   const radioOptions = actions.map((a) => ({ value: a.action, label: a.label, tone: RADIO_TONE[a.tone] }));
 
-  const completionPhotos = (ticket.history || [])
-    .filter((h) => h.action === 'complete')
-    .flatMap((h) => h.attachments || [])
+  const completionPhotos = workOrderAttachments
+    .filter((a) => a.stage === 'completion')
     .filter((a) => /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(a.fileName || a.file_name || a.filePath || a.file_path || ''));
 
   const addCompletionFiles = (selected) => {
