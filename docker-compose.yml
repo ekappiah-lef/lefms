@@ -82,6 +82,9 @@ services:
     networks:
       - lefms
 
+    ports:
+      - "127.0.0.1:4000:4000"
+
     # Backend is NOT exposed to the host.
     # Frontend Nginx communicates with:
     #
