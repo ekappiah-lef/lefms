@@ -312,7 +312,6 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
               <h2 className="text-base font-display font-bold text-slate-800">Completion Photos</h2>
-              <p className="text-[12px] text-slate-400 mt-0.5">Photos uploaded when this work order was completed.</p>
             </div>
             <span className="text-[12px] text-slate-400">{completionPhotos.length} {completionPhotos.length === 1 ? 'photo' : 'photos'}</span>
           </div>
