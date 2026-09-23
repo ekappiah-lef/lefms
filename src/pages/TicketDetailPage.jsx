@@ -254,7 +254,7 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
             </div>
           ) : (
             <div className="mt-6 pt-6 border-t border-slate-100 text-sm text-slate-500 font-medium text-center">
-              This work order is closed.
+            
             </div>
           )}
         </div>

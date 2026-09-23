@@ -64,13 +64,40 @@ export async function loadTicket(entityType, id, conn = pool) {
 // authority stays tied to the literal "Supervisor" role name.
 async function assertPermission(rule, ticket, user) {
   if (user.role === 'Administrator') return;
+
+  const canManage = await hasPermission(
+    user,
+    'work_orders',
+    'manage'
+  );
+
+  const isFO = user.role === 'FO' && canManage;
+
+  // FO can perform engineer actions across all regions.
   if (rule.who === 'engineer') {
-    if (Number(user.id) !== Number(ticket.engineer_id) || !(await hasPermission(user, 'work_orders', 'manage'))) {
-      throw new WorkflowError('Only the assigned engineer can perform this action', 403);
+    if (isFO) return;
+
+    if (
+      Number(user.id) !== Number(ticket.engineer_id) ||
+      !canManage
+    ) {
+      throw new WorkflowError(
+        'Only the assigned engineer or FO can perform this action',
+        403
+      );
     }
-  } else if (rule.who === 'supervisor') {
-    if (user.role !== 'Supervisor' || Number(user.regionId) !== Number(ticket.region_id)) {
-      throw new WorkflowError('Only that region\'s supervisor can perform this action', 403);
+  }
+
+  // Supervisor actions remain restricted.
+  if (rule.who === 'supervisor') {
+    if (
+      user.role !== 'Supervisor' ||
+      Number(user.regionId) !== Number(ticket.region_id)
+    ) {
+      throw new WorkflowError(
+        "Only that region's supervisor can perform this action",
+        403
+      );
     }
   }
 }

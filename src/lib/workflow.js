@@ -45,14 +45,41 @@ const EXTRA_ACTIONS = [
 
 export function availableActions(ticket, user) {
   const list = [...(ACTIONS_BY_STATUS[ticket.status] || [])];
-  if (ACTIVE_STATUSES.includes(ticket.status)) list.push(...EXTRA_ACTIONS);
-  // Complete only shows once at least one Update has been logged.
-  const hasUpdate = (ticket.history || []).some((h) => h.action === 'update');
-  const eligible = list.filter((a) => a.action !== 'complete' || hasUpdate);
+
+  if (ACTIVE_STATUSES.includes(ticket.status)) {
+    list.push(...EXTRA_ACTIONS);
+  }
+
+  const hasUpdate = (ticket.history || [])
+    .some((h) => h.action === 'update');
+
+  const eligible = list.filter(
+    (a) => a.action !== 'complete' || hasUpdate
+  );
+
   if (user.role === 'Administrator') return eligible;
+
+  const canManage = hasPerm(user, 'work_orders', 'manage');
+
+  // FO can process Work Orders across all regions.
+  if (user.role === 'FO' && canManage) {
+    return eligible.filter((a) =>
+      ['engineer', 'supervisor'].includes(a.who) &&
+      !['close', 'rework', 'reopen'].includes(a.action)
+    );
+  }
+
   return eligible.filter((a) => {
-    if (a.who === 'engineer') return hasPerm(user, 'work_orders', 'manage') && Number(user.id) === Number(ticket.engineerId);
-    if (a.who === 'supervisor') return user.role === 'Supervisor' && Number(user.regionId) === Number(ticket.regionId);
+    if (a.who === 'engineer') {
+      return canManage &&
+        Number(user.id) === Number(ticket.engineerId);
+    }
+
+    if (a.who === 'supervisor') {
+      return user.role === 'Supervisor' &&
+        Number(user.regionId) === Number(ticket.regionId);
+    }
+
     return false;
   });
 }
