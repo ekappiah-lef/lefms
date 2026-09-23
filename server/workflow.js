@@ -80,17 +80,6 @@ async function assertPermission(rule, ticket, user) {
       Number(user.id) === Number(ticket.engineer_id) &&
       canManage;
 
-    // TEMPORARY DEBUG
-    console.log('WO PERMISSION DEBUG:', {
-      userId: user.id,
-      role: user.role,
-      roleId: user.roleId,
-      canManage,
-      isFOEngineer,
-      isAssignedEngineer,
-      assignedEngineerId: ticket.engineer_id
-    });
-
     if (!isFOEngineer && !isAssignedEngineer) {
       throw new WorkflowError(
         'Only the assigned engineer or FO engineer can perform this action',
