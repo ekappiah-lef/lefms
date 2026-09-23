@@ -65,31 +65,30 @@ export async function loadTicket(entityType, id, conn = pool) {
 async function assertPermission(rule, ticket, user) {
   if (user.role === 'Administrator') return;
 
-  const canManage = await hasPermission(
-    user,
-    'work_orders',
-    'manage'
-  );
-
-  const isFO = user.role === 'FO' && canManage;
-
-  // FO can perform engineer actions across all regions.
   if (rule.who === 'engineer') {
-    if (isFO) return;
 
-    if (
-      Number(user.id) !== Number(ticket.engineer_id) ||
-      !canManage
-    ) {
+    const canManage = await hasPermission(
+      user,
+      'work_orders',
+      'manage'
+    );
+
+    const isFOEngineer =
+      user.role === 'FO engineer' && canManage;
+
+    const isAssignedEngineer =
+      Number(user.id) === Number(ticket.engineer_id) &&
+      canManage;
+
+    if (!isFOEngineer && !isAssignedEngineer) {
       throw new WorkflowError(
-        'Only the assigned engineer or FO can perform this action',
+        'Only the assigned engineer or FO engineer can perform this action',
         403
       );
     }
-  }
 
-  // Supervisor actions remain restricted.
-  if (rule.who === 'supervisor') {
+  } else if (rule.who === 'supervisor') {
+
     if (
       user.role !== 'Supervisor' ||
       Number(user.regionId) !== Number(ticket.region_id)
@@ -99,9 +98,9 @@ async function assertPermission(rule, ticket, user) {
         403
       );
     }
+
   }
 }
-
 async function assertEhsClearedForComplete(conn, workOrderId) {
   const [[ehs]] = await conn.query('SELECT status, outcome FROM ehs_records WHERE work_order_id = ?', [workOrderId]);
   // A flagged review already drops the record back to PENDING (see
@@ -190,9 +189,29 @@ export async function addUpdate(entityType, id, user, note) {
     if (!ACTIVE_STATUSES.includes(ticket.status)) {
       throw new WorkflowError(`Cannot add an update to a ticket in status ${ticket.status}`, 409);
     }
-    if (user.role !== 'Administrator' && (Number(user.id) !== Number(ticket.engineer_id) || !(await hasPermission(user, 'work_orders', 'manage')))) {
-      throw new WorkflowError('Only the assigned engineer can post an update', 403);
-    }
+  const canManage = await hasPermission(
+  user,
+  'work_orders',
+  'manage'
+);
+
+const isFOEngineer =
+  user.role === 'FO engineer' && canManage;
+
+const isAssignedEngineer =
+  Number(user.id) === Number(ticket.engineer_id) &&
+  canManage;
+
+if (
+  user.role !== 'Administrator' &&
+  !isFOEngineer &&
+  !isAssignedEngineer
+) {
+  throw new WorkflowError(
+    'Only the assigned engineer or FO engineer can post an update',
+    403
+  );
+}
     const [hist] = await conn.query(
       `INSERT INTO ticket_history (entity_type, entity_id, from_status, to_status, action, actor_id, note) VALUES (?, ?, ?, ?, 'update', ?, ?)`,
       [entityType, id, ticket.status, ticket.status, user.id, note.trim()]

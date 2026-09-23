@@ -50,6 +50,7 @@ export function availableActions(ticket, user) {
     list.push(...EXTRA_ACTIONS);
   }
 
+  // Complete only shows after at least one Update.
   const hasUpdate = (ticket.history || [])
     .some((h) => h.action === 'update');
 
@@ -59,19 +60,17 @@ export function availableActions(ticket, user) {
 
   if (user.role === 'Administrator') return eligible;
 
-  const canManage = hasPerm(user, 'work_orders', 'manage');
-
-  // FO can process Work Orders across all regions.
-  if (user.role === 'FO' && canManage) {
-    return eligible.filter((a) =>
-      ['engineer', 'supervisor'].includes(a.who) &&
-      !['close', 'rework', 'reopen'].includes(a.action)
-    );
+  // FO engineer can process Work Orders across all regions.
+  if (
+    user.role === 'FO engineer' &&
+    hasPerm(user, 'work_orders', 'manage')
+  ) {
+    return eligible.filter((a) => a.who === 'engineer');
   }
 
   return eligible.filter((a) => {
     if (a.who === 'engineer') {
-      return canManage &&
+      return hasPerm(user, 'work_orders', 'manage') &&
         Number(user.id) === Number(ticket.engineerId);
     }
 
@@ -83,7 +82,6 @@ export function availableActions(ticket, user) {
     return false;
   });
 }
-
 // Visual styling for each Activity/History timeline entry, matching
 // work-order-details-state-flow.html's colour-coded event types.
 export const HISTORY_STYLE = {
