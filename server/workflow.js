@@ -80,6 +80,17 @@ async function assertPermission(rule, ticket, user) {
       Number(user.id) === Number(ticket.engineer_id) &&
       canManage;
 
+    // TEMPORARY DEBUG
+    console.log('WO PERMISSION DEBUG:', {
+      userId: user.id,
+      role: user.role,
+      roleId: user.roleId,
+      canManage,
+      isFOEngineer,
+      isAssignedEngineer,
+      assignedEngineerId: ticket.engineer_id
+    });
+
     if (!isFOEngineer && !isAssignedEngineer) {
       throw new WorkflowError(
         'Only the assigned engineer or FO engineer can perform this action',
@@ -101,6 +112,7 @@ async function assertPermission(rule, ticket, user) {
 
   }
 }
+
 async function assertEhsClearedForComplete(conn, workOrderId) {
   const [[ehs]] = await conn.query('SELECT status, outcome FROM ehs_records WHERE work_order_id = ?', [workOrderId]);
   // A flagged review already drops the record back to PENDING (see
