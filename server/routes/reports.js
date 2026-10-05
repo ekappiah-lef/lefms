@@ -21,13 +21,22 @@ const SELECT = `SELECT w.wo_no, w.wo_type, w.region_name, w.site_name, w.site_co
                  JOIN users cu ON cu.id = w.created_by JOIN users eu ON eu.id = w.engineer_id`;
 const COLUMNS = ['wo_no', 'wo_type', 'region_name', 'site_name', 'site_code', 'asset', 'title', 'description', 'priority', 'status', 'created_by', 'engineer', 'frequency', 'next_due', 'created_at', 'accepted_at', 'completed_at', 'cancelled_at', 'closed_at', 'rejected_at'];
 
+// The report pages' date pickers send a bare YYYY-MM-DD, which MySQL reads as
+// midnight at the START of that day, so a plain `created_at <= to` dropped
+// everything created on the end date itself (a single-day or "up to today"
+// export came out empty). A bare date means "through the end of that day".
+function pushToDate(where, params, column, to) {
+  where.push(/^\d{4}-\d{2}-\d{2}$/.test(to) ? `${column} < DATE_ADD(?, INTERVAL 1 DAY)` : `${column} <= ?`);
+  params.push(to);
+}
+
 function applyFilters(sql, query) {
   const where = []; const params = [];
   if (query.type) { where.push('w.wo_type = ?'); params.push(query.type); }
   if (query.region) { where.push('w.region_id = ?'); params.push(query.region); }
   if (query.status) { where.push('w.status = ?'); params.push(query.status); }
   if (query.from) { where.push('w.created_at >= ?'); params.push(query.from); }
-  if (query.to) { where.push('w.created_at <= ?'); params.push(query.to); }
+  if (query.to) pushToDate(where, params, 'w.created_at', query.to);
   return { sql: where.length ? `${sql} WHERE ${where.join(' AND ')}` : sql, params };
 }
 
@@ -297,7 +306,7 @@ router.get('/export/ehs-excel', authorizeModule('ehs_reports', 'view'), async (r
   if (req.query.status) { where.push('eh.status = ?'); params.push(req.query.status); }
   if (req.query.region) { where.push('w.region_id = ?'); params.push(req.query.region); }
   if (req.query.from) { where.push('eh.created_at >= ?'); params.push(req.query.from); }
-  if (req.query.to) { where.push('eh.created_at <= ?'); params.push(req.query.to); }
+  if (req.query.to) pushToDate(where, params, 'eh.created_at', req.query.to);
   const sql = `SELECT eh.ehs_no, w.wo_no, w.wo_type, w.title AS wo_title, w.site_name, w.region_name,
                       eu.full_name AS engineer, eh.status, eh.outcome, su.full_name AS submitted_by, eh.submitted_at,
                       ru.full_name AS reviewed_by, eh.reviewed_at, eh.review_note, eh.created_at
@@ -328,7 +337,7 @@ router.get('/export/tt-excel', authorizeModule('tt_reports', 'view'), async (req
   if (req.query.region) { where.push('t.region_id = ?'); params.push(req.query.region); }
   if (req.query.priority) { where.push('t.priority = ?'); params.push(req.query.priority); }
   if (req.query.from) { where.push('t.created_at >= ?'); params.push(req.query.from); }
-  if (req.query.to) { where.push('t.created_at <= ?'); params.push(req.query.to); }
+  if (req.query.to) pushToDate(where, params, 't.created_at', req.query.to);
   const sql = `SELECT t.tt_no, t.title, t.site_name, t.site_code, t.region_name, t.category, t.priority, t.status,
                       t.fault_occurred_at, t.fault_resolved_at,
                       cu.full_name AS created_by, t.created_at, t.closed_at, bu.full_name AS closed_by,
@@ -360,7 +369,7 @@ router.get('/export/spares-excel', authorizeModule('spare_reports', 'view'), asy
   const [items] = await pool.query(`SELECT sku, name, category, unit, reorder_level, quantity_on_hand, store_location FROM spare_items ORDER BY name`);
   const where = []; const params = [];
   if (req.query.from) { where.push('t.created_at >= ?'); params.push(req.query.from); }
-  if (req.query.to) { where.push('t.created_at <= ?'); params.push(req.query.to); }
+  if (req.query.to) pushToDate(where, params, 't.created_at', req.query.to);
   if (req.query.type) { where.push('t.type = ?'); params.push(req.query.type); }
   const [ledger] = await pool.query(
     `SELECT si.sku, COALESCE(si.name, t.item_name) AS name, t.type, t.qty, w.wo_no, s.name AS site_name, u.full_name AS performed_by, t.note, t.created_at

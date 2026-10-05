@@ -3,8 +3,7 @@ import {
   ResponsiveContainer, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LabelList, PieChart, Pie, Cell,
 } from 'recharts';
-import { ListChecks, Wrench, CheckCircle2, Lock, AlertTriangle, Clock, CalendarClock } from 'lucide-react';
-import { PageHeader, KpiGrid, Kpi, SectionCard, Table, Tr, Td, Badge } from '../components/ui';
+import { PageHeader, SectionCard, Table, Tr, Td, Badge } from '../components/ui';
 import DonutBreakdown from '../components/DonutBreakdown';
 import { api } from '../api/client';
 import { STATUS_LABELS, STATUS_TONE } from '../lib/workflow';
@@ -51,60 +50,17 @@ export default function Overview({ user }) {
     <div className="space-y-5">
       <PageHeader title="LEF MS Dashboard" subtitle="Operational overview of every Work Order across all sites" />
 
-      <KpiGrid cols={4} size="lg">
-        <Kpi title="Total Work Orders" value={data.total} icon={ListChecks} />
-        <Kpi title="Corrective (CM)" value={data.byType.CM} icon={AlertTriangle} tone="rose" />
-        <Kpi title="Preventive (PM)" value={data.byType.PM} icon={CalendarClock} />
-        <Kpi title="Planned (PLM)" value={data.byType.PLM} icon={Wrench} />
-      </KpiGrid>
-      <KpiGrid cols={4} size="lg">
-        <Kpi title="Open" value={data.open} icon={Clock} />
-        <Kpi title="In Progress" value={data.combinedStatus.PR} icon={Clock} />
-        <Kpi title="Completed" value={data.completed} icon={CheckCircle2} />
-        <Kpi title="Closed" value={data.closed} icon={Lock} hint={`${data.closeRate}% close rate`} />
-      </KpiGrid>
-
-      <div className="grid lg:grid-cols-3 gap-4">
-        <SectionCard title="Work Orders by Region" className="lg:col-span-2">
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={regionBar} margin={{ left: -18, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="CR" name={STATUS_LABELS.CR} fill={STATUS_COLORS.CR} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="PR" name={STATUS_LABELS.PR} fill={STATUS_COLORS.PR} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="RJ" name={STATUS_LABELS.RJ} fill={STATUS_COLORS.RJ} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="CA" name={STATUS_LABELS.CA} fill={STATUS_COLORS.CA} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="CO" name={STATUS_LABELS.CO} fill={STATUS_COLORS.CO} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="CL" name={STATUS_LABELS.CL} fill={STATUS_COLORS.CL} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </SectionCard>
-
-        <DonutBreakdown title="All Status" data={statusDonut} totalLabel="Work Orders" />
+      {/* In Process / Completed / Closed are the per-status counts (same
+          numbers the "All Status" donut shows), so the three cards and the
+          donut reconcile. data.completed would fold Closed into Completed. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard color="indigo" title="Total Work Orders" value={data.total} />
+        <StatCard color="amber" title="In Process" value={data.combinedStatus.PR} />
+        <StatCard color="emerald" title="Completed" value={data.combinedStatus.CO} />
+        <StatCard color="slate" title="Closed" value={data.combinedStatus.CL} />
       </div>
 
-      <div className="grid lg:grid-cols-1 gap-4">
-        <SectionCard title="Work Orders by Data Center">
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={siteBar} margin={{ left: -18, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="CR" name={STATUS_LABELS.CR} fill={STATUS_COLORS.CR} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="PR" name={STATUS_LABELS.PR} fill={STATUS_COLORS.PR} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="RJ" name={STATUS_LABELS.RJ} fill={STATUS_COLORS.RJ} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="CA" name={STATUS_LABELS.CA} fill={STATUS_COLORS.CA} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="CO" name={STATUS_LABELS.CO} fill={STATUS_COLORS.CO} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="CL" name={STATUS_LABELS.CL} fill={STATUS_COLORS.CL} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </SectionCard>
-      </div>
+      <SectionHeading dot="bg-rose-500">Trouble Tickets</SectionHeading>
 
    <div className="grid lg:grid-cols-2 gap-4">
   <SectionCard title="Trouble Ticket Issues by Data Centre">
@@ -222,6 +178,50 @@ export default function Overview({ user }) {
         <LabeledPieChart title="Issues by System / Fault Type" data={ttByCategory} />
       </div>
 
+      <SectionHeading dot="bg-indigo-500">Work Orders</SectionHeading>
+
+      <div className="grid lg:grid-cols-3 gap-4">
+        <SectionCard title="Work Orders by Region" className="lg:col-span-2">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={regionBar} margin={{ left: -18, right: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="CR" name={STATUS_LABELS.CR} fill={STATUS_COLORS.CR} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="PR" name={STATUS_LABELS.PR} fill={STATUS_COLORS.PR} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="RJ" name={STATUS_LABELS.RJ} fill={STATUS_COLORS.RJ} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="CA" name={STATUS_LABELS.CA} fill={STATUS_COLORS.CA} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="CO" name={STATUS_LABELS.CO} fill={STATUS_COLORS.CO} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="CL" name={STATUS_LABELS.CL} fill={STATUS_COLORS.CL} radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        <DonutBreakdown title="All Status" data={statusDonut} totalLabel="Work Orders" />
+      </div>
+
+      <div className="grid lg:grid-cols-1 gap-4">
+        <SectionCard title="Work Orders by Data Center">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={siteBar} margin={{ left: -18, right: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="CR" name={STATUS_LABELS.CR} fill={STATUS_COLORS.CR} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="PR" name={STATUS_LABELS.PR} fill={STATUS_COLORS.PR} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="RJ" name={STATUS_LABELS.RJ} fill={STATUS_COLORS.RJ} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="CA" name={STATUS_LABELS.CA} fill={STATUS_COLORS.CA} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="CO" name={STATUS_LABELS.CO} fill={STATUS_COLORS.CO} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="CL" name={STATUS_LABELS.CL} fill={STATUS_COLORS.CL} radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </SectionCard>
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-4">
         <SectionCard title="Work Orders Created   Monthly Trend" className="lg:col-span-2">
           <ResponsiveContainer width="100%" height={220}>
@@ -310,5 +310,40 @@ function LabeledPieChart({ title, data }) {
         </ResponsiveContainer>
       )}
     </SectionCard>
+  );
+}
+
+// Dashboard-only headline card (the shared <Kpi> used by every list page is
+// untouched): a solid, fully colored card with white text. Each fill is a
+// full literal class string, never built by interpolation, so Tailwind's
+// scanner can see it. The gradient is darkest at the top-left, where the
+// white title and number sit, so the text keeps its contrast on every color
+// (a plain mid-tone amber would be too light for white text). Amber, green
+// and slate echo the chart palette (In Process / Completed / Closed).
+const STAT_STYLES = {
+  indigo:  'from-indigo-700 via-indigo-600 to-violet-500 shadow-indigo-500/25',
+  amber:   'from-orange-700 via-amber-600 to-amber-500 shadow-amber-500/25',
+  emerald: 'from-emerald-700 via-emerald-600 to-teal-500 shadow-emerald-500/25',
+  slate:   'from-slate-800 via-slate-700 to-slate-600 shadow-slate-500/25',
+};
+
+function StatCard({ title, value, color }) {
+  return (
+    <div className={`rounded-2xl bg-linear-to-br p-5 text-white shadow-lg ${STAT_STYLES[color]}`}>
+      <div className="text-xs font-bold uppercase tracking-wider">{title}</div>
+      <div className="mt-2 text-5xl font-display font-extrabold tabular">{value}</div>
+    </div>
+  );
+}
+
+// Labels the two chart groups now that the Trouble Ticket charts lead and
+// the (work-order-only) stat cards sit above both.
+function SectionHeading({ dot, children }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <span aria-hidden className={`h-2 w-2 rounded-full ${dot}`} />
+      <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">{children}</h2>
+      <span aria-hidden className="h-px flex-1 bg-slate-200" />
+    </div>
   );
 }
