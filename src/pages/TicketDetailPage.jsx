@@ -12,6 +12,95 @@ const EHS_TONE = { PENDING: 'amber', SUBMITTED: 'blue', REVIEWED: 'green' };
 const EHS_LABEL = { PENDING: 'Pending', SUBMITTED: 'Submitted', REVIEWED: 'Reviewed' };
 const SPARE_STATUS_TONE = { Requested: 'amber', Approved: 'blue', Rejected: 'red', Issued: 'green', 'Partially Issued': 'purple', Closed: 'slate' };
 
+const MAX_PHOTOS = 10;
+// The attachments table's `stage` is an enum of creation | completion | other.
+// No work-order photo is uploaded as "creation" otherwise, so Before / After
+// reuse those two stages (no database change): Before = creation, After =
+// completion. Every existing completion photo therefore already reads as an
+// "After" photo. The mobile app uses the same mapping.
+const BEFORE_STAGE = 'creation';
+const AFTER_STAGE = 'completion';
+const IMAGE_FILE = /\.(jpe?g|png|webp|gif|bmp|avif)$/i;
+const isImageAttachment = (a) => IMAGE_FILE.test(a.fileName || a.file_name || a.filePath || a.file_path || '');
+
+// One labelled group of saved photos (Before or After) in the detail view.
+// Renders nothing when empty, so a work order with only After photos doesn't
+// show an empty Before section. `offset` is where this group starts in the
+// shared lightbox list.
+function PhotoGroup({ title, photos, offset, onOpen }) {
+  if (photos.length === 0) return null;
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2 className="text-base font-display font-bold text-slate-800">{title}</h2>
+        <span className="text-[12px] text-slate-400">{photos.length} {photos.length === 1 ? 'photo' : 'photos'}</span>
+      </div>
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+        {photos.map((photo, index) => (
+          <button
+            type="button"
+            key={photo.id || index}
+            onClick={() => onOpen(offset + index)}
+            className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
+            title={photo.fileName || photo.file_name || `${title} ${index + 1}`}
+          >
+            <img
+              src={uploadsUrl(photo.filePath || photo.file_path)}
+              alt={photo.fileName || photo.file_name || `${title} ${index + 1}`}
+              className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+            />
+            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// One labelled photo picker (Before or After) with thumbnails and remove buttons.
+function PhotoPicker({ label, optional, files, onAdd, onRemove }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <label className="text-[11px] font-semibold text-slate-600">{label}{optional ? ' (optional)' : ''}</label>
+        <span className="text-[11px] text-slate-400">{files.length}/{MAX_PHOTOS}</span>
+      </div>
+
+      {files.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+          {files.map((photo, index) => (
+            <div key={`${photo.name}-${photo.lastModified}-${index}`} className="relative rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+              <img src={URL.createObjectURL(photo)} alt={photo.name} className="w-full h-24 object-cover" />
+              <button
+                type="button"
+                onClick={() => onRemove(index)}
+                className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full bg-white/95 shadow flex items-center justify-center text-red-600 hover:bg-red-50"
+                title="Remove photo"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {files.length < MAX_PHOTOS && (
+        <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 px-4 py-4 text-[13px] font-semibold text-slate-500 cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition">
+          <Images className="h-4 w-4" />
+          Add {label.toLowerCase()}
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { onAdd(e.target.files); e.target.value = ''; }}
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
 function fmt(dt) {
   return new Date(dt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
@@ -35,7 +124,8 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
   const [newEngineer, setNewEngineer] = useState('');
   const [checklistDraft, setChecklistDraft] = useState({});
   const [file, setFile] = useState(null);
-  const [completionFiles, setCompletionFiles] = useState([]);
+  const [beforeFiles, setBeforeFiles] = useState([]);
+  const [afterFiles, setAfterFiles] = useState([]);
   const [workOrderAttachments, setWorkOrderAttachments] = useState([]);
   const [galleryIndex, setGalleryIndex] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -63,7 +153,7 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
 
   const openAction = (a) => {
     setActiveAction(a);
-    setNote(''); setNewEngineer(''); setFile(null); setCompletionFiles([]); setActionError('');
+    setNote(''); setNewEngineer(''); setFile(null); setBeforeFiles([]); setAfterFiles([]); setActionError('');
     if (a.action === 'complete' && ticket.woType === 'PM') {
       setChecklistDraft(Object.fromEntries((ticket.checklist || []).map((c) => [c.id, c.response || 'N/A'])));
     }
@@ -80,8 +170,11 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
       const resp = await api.workOrders.action(id, activeAction.action, { note, ...extra });
       if (resp?.historyId) {
         if (activeAction.action === 'complete') {
-          for (const photo of completionFiles) {
-            await api.attachments.upload('work_order', id, 'completion', photo, resp.historyId);
+          for (const photo of beforeFiles) {
+            await api.attachments.upload('work_order', id, BEFORE_STAGE, photo, resp.historyId);
+          }
+          for (const photo of afterFiles) {
+            await api.attachments.upload('work_order', id, AFTER_STAGE, photo, resp.historyId);
           }
         } else if (file) {
           await api.attachments.upload('work_order', id, 'other', file, resp.historyId);
@@ -101,20 +194,21 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
   const canSubmit = (NO_NOTE_ACTIONS.includes(activeAction?.action) || note.trim()) && (!activeAction?.engineerRequired || newEngineer);
   const radioOptions = actions.map((a) => ({ value: a.action, label: a.label, tone: RADIO_TONE[a.tone] }));
 
-  const completionPhotos = workOrderAttachments
-    .filter((a) => a.stage === 'completion')
-    .filter((a) => /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(a.fileName || a.file_name || a.filePath || a.file_path || ''));
+  const beforePhotos = workOrderAttachments.filter((a) => a.stage === BEFORE_STAGE).filter(isImageAttachment);
+  const afterPhotos = workOrderAttachments.filter((a) => a.stage === AFTER_STAGE).filter(isImageAttachment);
+  // One list for the lightbox so previous / next walk through Before then After.
+  const galleryPhotos = [...beforePhotos, ...afterPhotos];
 
-  const addCompletionFiles = (selected) => {
+  const addFilesTo = (setter) => (selected) => {
     const incoming = Array.from(selected || []).filter((f) => f.type.startsWith('image/'));
-    setCompletionFiles((current) => {
-      const remaining = Math.max(0, 5 - current.length);
+    setter((current) => {
+      const remaining = Math.max(0, MAX_PHOTOS - current.length);
       return [...current, ...incoming.slice(0, remaining)];
     });
   };
 
-  const removeCompletionFile = (index) => {
-    setCompletionFiles((current) => current.filter((_, i) => i !== index));
+  const removeFileFrom = (setter) => (index) => {
+    setter((current) => current.filter((_, i) => i !== index));
   };
 
   return (
@@ -188,44 +282,10 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
                       {ATTACHABLE_ACTIONS.includes(activeAction.action) && (
                         <>
                           {activeAction.action === 'complete' ? (
-                            <div className="mt-4">
-                              <div className="flex items-center justify-between gap-3 mb-1">
-                                <label className="text-[11px] font-semibold text-slate-600">Completion Photos (optional)</label>
-                                <span className="text-[11px] text-slate-400">{completionFiles.length}/5</span>
-                              </div>
-
-                              {completionFiles.length > 0 && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
-                                  {completionFiles.map((photo, index) => (
-                                    <div key={`${photo.name}-${photo.lastModified}-${index}`} className="relative rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-                                      <img src={URL.createObjectURL(photo)} alt={photo.name} className="w-full h-24 object-cover" />
-                                      <button
-                                        type="button"
-                                        onClick={() => removeCompletionFile(index)}
-                                        className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full bg-white/95 shadow flex items-center justify-center text-red-600 hover:bg-red-50"
-                                        title="Remove photo"
-                                      >
-                                        <X className="h-3.5 w-3.5" />
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-
-                              {completionFiles.length < 5 && (
-                                <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 px-4 py-4 text-[13px] font-semibold text-slate-500 cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition">
-                                  <Images className="h-4 w-4" />
-                                  Add completion photos
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    className="hidden"
-                                    onChange={(e) => { addCompletionFiles(e.target.files); e.target.value = ''; }}
-                                  />
-                                </label>
-                              )}
-                              <p className="text-[11px] text-slate-400 mt-1.5">Maximum 5 photos.</p>
+                            <div className="mt-4 space-y-4">
+                              <PhotoPicker label="Before Photos" optional files={beforeFiles} onAdd={addFilesTo(setBeforeFiles)} onRemove={removeFileFrom(setBeforeFiles)} />
+                              <PhotoPicker label="After Photos" optional files={afterFiles} onAdd={addFilesTo(setAfterFiles)} onRemove={removeFileFrom(setAfterFiles)} />
+                              <p className="text-[11px] text-slate-400">Up to {MAX_PHOTOS} photos in each group.</p>
                             </div>
                           ) : (
                             <>
@@ -307,33 +367,10 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
         </div>
       </div>
 
-      {completionPhotos.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 mb-5">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-base font-display font-bold text-slate-800">Completion Photos</h2>
-            </div>
-            <span className="text-[12px] text-slate-400">{completionPhotos.length} {completionPhotos.length === 1 ? 'photo' : 'photos'}</span>
-          </div>
-
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-            {completionPhotos.map((photo, index) => (
-              <button
-                type="button"
-                key={photo.id || index}
-                onClick={() => setGalleryIndex(index)}
-                className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
-                title={photo.fileName || photo.file_name || `Completion photo ${index + 1}`}
-              >
-                <img
-                  src={uploadsUrl(photo.filePath || photo.file_path)}
-                  alt={photo.fileName || photo.file_name || `Completion photo ${index + 1}`}
-                  className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
-                />
-                <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
-              </button>
-            ))}
-          </div>
+      {galleryPhotos.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 mb-5 space-y-6">
+          <PhotoGroup title="Before Photos" photos={beforePhotos} offset={0} onOpen={setGalleryIndex} />
+          <PhotoGroup title="After Photos" photos={afterPhotos} offset={beforePhotos.length} onOpen={setGalleryIndex} />
         </div>
       )}
 
@@ -345,7 +382,7 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
         {ticket.history.map((h) => <HistoryItem key={h.id} h={h} woType={ticket.woType} />)}
       </div>
 
-      {galleryIndex !== null && completionPhotos[galleryIndex] && (
+      {galleryIndex !== null && galleryPhotos[galleryIndex] && (
         <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={() => setGalleryIndex(null)}>
           <button
             type="button"
@@ -356,10 +393,10 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
             <X className="h-5 w-5" />
           </button>
 
-          {completionPhotos.length > 1 && (
+          {galleryPhotos.length > 1 && (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setGalleryIndex((galleryIndex - 1 + completionPhotos.length) % completionPhotos.length); }}
+              onClick={(e) => { e.stopPropagation(); setGalleryIndex((galleryIndex - 1 + galleryPhotos.length) % galleryPhotos.length); }}
               className="absolute left-3 sm:left-6 h-11 w-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
               title="Previous photo"
             >
@@ -369,20 +406,20 @@ export default function TicketDetailPage({ id, user, onBack, onChanged, onOpenEh
 
           <div className="max-w-6xl max-h-[88vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
             <img
-              src={uploadsUrl(completionPhotos[galleryIndex].filePath || completionPhotos[galleryIndex].file_path)}
-              alt={completionPhotos[galleryIndex].fileName || completionPhotos[galleryIndex].file_name || `Completion photo ${galleryIndex + 1}`}
+              src={uploadsUrl(galleryPhotos[galleryIndex].filePath || galleryPhotos[galleryIndex].file_path)}
+              alt={galleryPhotos[galleryIndex].fileName || galleryPhotos[galleryIndex].file_name || `Photo ${galleryIndex + 1}`}
               className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
             />
             <div className="mt-3 text-center text-white">
-              <div className="text-sm font-semibold">{completionPhotos[galleryIndex].fileName || completionPhotos[galleryIndex].file_name}</div>
-              <div className="text-xs text-white/60 mt-1">{galleryIndex + 1} of {completionPhotos.length}</div>
+              <div className="text-sm font-semibold">{galleryIndex < beforePhotos.length ? 'Before' : 'After'} · {galleryPhotos[galleryIndex].fileName || galleryPhotos[galleryIndex].file_name}</div>
+              <div className="text-xs text-white/60 mt-1">{galleryIndex + 1} of {galleryPhotos.length}</div>
             </div>
           </div>
 
-          {completionPhotos.length > 1 && (
+          {galleryPhotos.length > 1 && (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setGalleryIndex((galleryIndex + 1) % completionPhotos.length); }}
+              onClick={(e) => { e.stopPropagation(); setGalleryIndex((galleryIndex + 1) % galleryPhotos.length); }}
               className="absolute right-3 sm:right-6 h-11 w-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
               title="Next photo"
             >
