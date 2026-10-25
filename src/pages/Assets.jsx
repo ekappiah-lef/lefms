@@ -38,8 +38,8 @@ export default function Assets({ user }) {
         actions={canManage && <Button icon={Plus} onClick={() => setShowNew(true)}>New Asset</Button>} />
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search asset…">
-        <Select className="w-52" value={site} onChange={setSite} options={sites.map((s) => ({ value: String(s.id), label: `${s.siteCode}   ${s.name}` }))} label="All sites" />
-        <Select className="w-44" value={status} onChange={setStatus} options={STATUSES} label="All statuses" />
+        <Select className="w-full sm:w-52" value={site} onChange={setSite} options={sites.map((s) => ({ value: String(s.id), label: `${s.siteCode}   ${s.name}` }))} label="All sites" />
+        <Select className="w-full sm:w-44" value={status} onChange={setStatus} options={STATUSES} label="All statuses" />
       </FilterBar>
 
       <Table headers={['Tag', 'Name', 'Category', 'Site', 'Manufacturer', 'Calibration Due', 'Status']} empty={loading ? 'Loading…' : 'No assets found'}>
@@ -60,7 +60,7 @@ export default function Assets({ user }) {
       {selected && (
         <Modal open onClose={() => setSelected(null)} title={selected.name} subtitle={`${selected.tag} · ${selected.category}`}
           footer={<Button variant="ghost" onClick={() => setSelected(null)}>Close</Button>}>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Site" value={`${selected.siteCode}   ${selected.siteName}`} />
             <Field label="Manufacturer" value={selected.manufacturer} />
             <Field label="Model" value={selected.model} />
@@ -112,7 +112,7 @@ function NewAsset({ sites, onClose, onCreated }) {
     <Modal open onClose={onClose} title="New Asset" subtitle="Register a new asset"
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={!canSave || busy}>{busy ? 'Creating…' : 'Create Asset'}</Button></>}>
       {error && <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div><label className="text-[11px] font-semibold text-slate-600">Asset Tag</label><input value={f.tag} onChange={(e) => set('tag')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Name</label><input value={f.name} onChange={(e) => set('name')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Category</label><div className="mt-1"><Select value={f.category} onChange={set('category')} options={CATEGORIES} /></div></div>

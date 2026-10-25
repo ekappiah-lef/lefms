@@ -33,7 +33,7 @@ export default function TroubleTickets({ user, openCreate, openDetail }) {
       </KpiGrid>
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search TT, site, site ID…">
-        <Select className="w-40" value={status} onChange={setStatus} options={Object.entries(TT_STATUS_LABELS).map(([value, label]) => ({ value, label }))} label="All statuses" />
+        <Select className="w-full sm:w-40" value={status} onChange={setStatus} options={Object.entries(TT_STATUS_LABELS).map(([value, label]) => ({ value, label }))} label="All statuses" />
       </FilterBar>
 
       <Table headers={['TT No', 'Title', 'Site', 'Region', 'Priority', 'Status', 'Work Order', 'Created']} empty={loading ? 'Loading…' : 'No trouble tickets found'}>

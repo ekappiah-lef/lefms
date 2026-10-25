@@ -3,7 +3,7 @@ import {
   ChevronDown, ChevronRight, HardHat, Circle,
   LayoutDashboard, Ticket, ClipboardList, ShieldCheck, Package, ArrowLeftRight, Boxes, Building2, Server,
   BarChart3, FileBarChart, FileCheck2, FileSpreadsheet, MessageSquareText, Users, Settings, UserCog, KeyRound,
-  ListChecks, ClipboardCheck,
+  ListChecks, ClipboardCheck, X,
 } from 'lucide-react';
 import { navForRole } from '../config/platform';
 
@@ -33,10 +33,10 @@ const ICONS = {
   'admin-ehs-checklist': ClipboardCheck,
 };
 
-// Always-visible fixed sidebar   this is a web app, not a mobile-first
-// one, so there is no hamburger toggle and no off-canvas/collapse mode
-// to fight with; it just permanently occupies its own column.
-export default function Sidebar({ user, currentTab, setCurrentTab }) {
+// Fixed rail on desktop (lg and up). Below that it slides in over the page as
+// a drawer, opened from the header's menu button, so a phone gets the full
+// width for content instead of losing 256px to the navigation.
+export default function Sidebar({ user, currentTab, setCurrentTab, open: drawerOpen = false, onClose = () => {} }) {
   const groups = navForRole(user);
   // Every group starts closed (a clean, uncluttered first launch); a
   // group auto-opens the moment its own item becomes the active tab, so
@@ -48,6 +48,12 @@ export default function Sidebar({ user, currentTab, setCurrentTab }) {
     const activeGroup = groups.find((g) => g.items.some((i) => i.id === currentTab))?.group;
     if (activeGroup) setOpen((o) => (o[activeGroup] ? o : { ...o, [activeGroup]: true }));
   }, [currentTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, [drawerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   const toggle = (g) => setOpen((o) => ({ ...o, [g]: !o[g] }));
 
   const renderItem = (m) => {
@@ -72,12 +78,17 @@ export default function Sidebar({ user, currentTab, setCurrentTab }) {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex flex-col w-64 border-r border-sidebar-border bg-sidebar-bg">
+    <>
+    {drawerOpen && <div onClick={onClose} aria-hidden className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-[1px] lg:hidden" />}
+    <aside className={`fixed inset-y-0 left-0 z-50 lg:z-40 flex flex-col w-64 max-w-[85vw] border-r border-sidebar-border bg-sidebar-bg transition-transform duration-200 ease-out lg:translate-x-0 ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex items-center gap-2.5 h-16 px-4 border-b border-sidebar-border shrink-0">
         <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
           <HardHat className="h-5 w-5 text-primary-foreground" />
         </div>
-        <div className="min-w-0 text-lg font-display font-black leading-tight truncate text-sidebar-text-active">LEF MS</div>
+        <div className="min-w-0 flex-1 text-lg font-display font-black leading-tight truncate text-sidebar-text-active">LEF MS</div>
+        <button onClick={onClose} aria-label="Close menu" className="lg:hidden h-9 w-9 flex items-center justify-center rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-sidebar-text-active">
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto sidebar-scroll px-3 py-4 space-y-4">
@@ -103,5 +114,6 @@ export default function Sidebar({ user, currentTab, setCurrentTab }) {
         </div>
       </nav>
     </aside>
+    </>
   );
 }

@@ -65,11 +65,11 @@ export default function WorkOrders({ user, openCreate, openDetail }) {
       )}
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search WO, site, site ID…">
-        <Select className="w-44" value={woType} onChange={setWoType} options={Object.entries(WO_TYPE_LABEL).map(([value, label]) => ({ value, label }))} label="All types" />
-        <Select className="w-40" value={status} onChange={setStatus} options={Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))} label="All statuses" />
-        <Select className="w-40" value={priority} onChange={setPriority} options={PRIORITIES} label="All priorities" />
-        <Select className="w-40" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
-        <Select className="w-44" value={engineer} onChange={setEngineer} options={engineers.map((e) => ({ value: String(e.id), label: e.fullName }))} label="All engineers" />
+        <Select className="w-full sm:w-44" value={woType} onChange={setWoType} options={Object.entries(WO_TYPE_LABEL).map(([value, label]) => ({ value, label }))} label="All types" />
+        <Select className="w-full sm:w-40" value={status} onChange={setStatus} options={Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))} label="All statuses" />
+        <Select className="w-full sm:w-40" value={priority} onChange={setPriority} options={PRIORITIES} label="All priorities" />
+        <Select className="w-full sm:w-40" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
+        <Select className="w-full sm:w-44" value={engineer} onChange={setEngineer} options={engineers.map((e) => ({ value: String(e.id), label: e.fullName }))} label="All engineers" />
         <DateInput value={from} onChange={setFrom} />
         <span className="text-slate-400 text-xs">to</span>
         <DateInput value={to} onChange={setTo} />

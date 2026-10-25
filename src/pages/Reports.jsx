@@ -51,9 +51,9 @@ export default function Reports() {
       <SectionCard title="Export to PDF"
         action={<Button disabled={!selected.size || busy === 'bulk'} onClick={exportBulk}>Export Selected as ZIP ({selected.size})</Button>}>
         <FilterBar>
-          <Select className="w-48" value={woType} onChange={setWoType} options={Object.entries(WO_TYPE_LABEL).map(([value, label]) => ({ value, label }))} label="All types" />
-          <Select className="w-44" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
-          <Select className="w-44" value={status} onChange={setStatus} options={Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))} label="All statuses" />
+          <Select className="w-full sm:w-48" value={woType} onChange={setWoType} options={Object.entries(WO_TYPE_LABEL).map(([value, label]) => ({ value, label }))} label="All types" />
+          <Select className="w-full sm:w-44" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
+          <Select className="w-full sm:w-44" value={status} onChange={setStatus} options={Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))} label="All statuses" />
         </FilterBar>
 
         <Table headers={[<input key="all" type="checkbox" checked={rows.length > 0 && selected.size === rows.length} onChange={toggleAll} className="h-4 w-4 accent-primary" />, 'No.', 'Title', 'Site', 'Status', 'Export']}>

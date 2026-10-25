@@ -10,6 +10,7 @@ import archiver from 'archiver';
 import { pool } from '../db.js';
 import { getHistory } from '../workflow.js';
 import { authorizeModule } from '../permissions.js';
+import { isImageAttachment, loadPhoto, captionFor } from '../pdfImages.js';
 
 const router = Router();
 
@@ -209,11 +210,14 @@ function historyEntry(doc, h, woType) {
     doc.moveDown(0.4);
   }
 
-  if (h.attachments?.length) {
+  // Pictures are embedded in the photo sections above; only other files
+  // (e.g. PDFs) still need listing here.
+  const files = (h.attachments || []).filter((a) => !isImageAttachment({ file_name: a.fileName }));
+  if (files.length) {
     ensureSpace(doc, 13);
     doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#94a3b8').text('ATTACHMENTS', startX, doc.y, { characterSpacing: 0.3 });
     doc.moveDown(0.2);
-    h.attachments.forEach((a) => {
+    files.forEach((a) => {
       ensureSpace(doc, 12);
       doc.font('Helvetica').fontSize(9).fillColor('#2563eb').text(`• ${a.fileName}`, startX, doc.y, { width });
     });
@@ -225,6 +229,86 @@ function historyEntry(doc, h, woType) {
   doc.moveTo(startX, doc.y).lineTo(startX + width, doc.y).strokeColor('#e2e8f0').lineWidth(1).stroke();
   doc.strokeColor('#000');
   doc.moveDown(0.6);
+}
+
+// Photos are laid out three to a row. Each cell is a fixed-size frame with the
+// picture fitted inside it and a one-line caption (when/where it was taken)
+// underneath. Pictures are loaded a row at a time so memory stays flat even
+// for a work order with dozens of photos.
+const PHOTO_COLS = 3;
+const PHOTO_GAP = 10;
+const PHOTO_H = 120;
+const CAPTION_H = 22;
+
+async function photoSection(doc, title, atts) {
+  if (!atts.length) return;
+  const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const startX = doc.page.margins.left;
+  const cellW = (width - PHOTO_GAP * (PHOTO_COLS - 1)) / PHOTO_COLS;
+  const rowH = PHOTO_H + CAPTION_H + 8;
+
+  ensureSpace(doc, 26 + rowH);
+  sectionTitle(doc, `${title} (${atts.length})`);
+
+  for (let i = 0; i < atts.length; i += PHOTO_COLS) {
+    const row = atts.slice(i, i + PHOTO_COLS);
+    const buffers = await Promise.all(row.map((a) => loadPhoto(a.file_path)));
+    ensureSpace(doc, rowH);
+    const y = doc.y;
+    row.forEach((a, ci) => {
+      const x = startX + ci * (cellW + PHOTO_GAP);
+      doc.rect(x, y, cellW, PHOTO_H).fillAndStroke('#f1f5f9', '#e2e8f0');
+      if (buffers[ci]) {
+        doc.image(buffers[ci], x + 1, y + 1, { fit: [cellW - 2, PHOTO_H - 2], align: 'center', valign: 'center' });
+      } else {
+        doc.font('Helvetica').fontSize(8).fillColor('#94a3b8')
+          .text('Image unavailable', x, y + PHOTO_H / 2 - 4, { width: cellW, align: 'center', lineBreak: false });
+      }
+      doc.font('Helvetica').fontSize(7).fillColor('#64748b')
+        .text(captionFor(a, fmtDateTime), x, y + PHOTO_H + 4, { width: cellW, height: CAPTION_H - 4, ellipsis: true });
+    });
+    doc.fillColor('#000');
+    doc.x = startX;
+    doc.y = y + rowH;
+  }
+  doc.moveDown(0.6);
+}
+
+async function ehsSection(doc, woId) {
+  const [ehsRows] = await pool.query(
+    `SELECT eh.id, eh.ehs_no, eh.status, eh.outcome, eh.submitted_at, eh.reviewed_at, eh.review_note,
+            su.full_name AS submitted_by, ru.full_name AS reviewed_by
+     FROM ehs_records eh LEFT JOIN users su ON su.id = eh.submitted_by LEFT JOIN users ru ON ru.id = eh.reviewed_by
+     WHERE eh.work_order_id = ? ORDER BY eh.id`, [woId]
+  );
+  const startX = doc.page.margins.left;
+  const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+  for (const eh of ehsRows) {
+    sectionTitle(doc, 'EHS Assessment');
+    const fields = [
+      { label: 'EHS No.', value: eh.ehs_no },
+      { label: 'Status', value: eh.outcome ? `${eh.status} · ${eh.outcome}` : eh.status },
+    ];
+    if (eh.submitted_by) fields.push({ label: 'Submitted By', value: `${eh.submitted_by} · ${fmtDateTime(eh.submitted_at)}` });
+    if (eh.reviewed_by) fields.push({ label: 'Reviewed By', value: `${eh.reviewed_by} · ${fmtDateTime(eh.reviewed_at)}` });
+    fieldGrid(doc, fields);
+    if (eh.review_note) boxedText(doc, 'Reviewer note', eh.review_note);
+
+    const [checklist] = await pool.query('SELECT question, response FROM ehs_checklist WHERE ehs_record_id = ? ORDER BY id', [eh.id]);
+    checklist.forEach((c) => {
+      ensureSpace(doc, 14);
+      doc.font('Helvetica').fontSize(9.5).fillColor('#334155').text(`${c.response || 'Not answered'}   ${c.question}`, startX, doc.y, { width: usableWidth });
+    });
+    doc.fillColor('#000');
+    if (checklist.length) doc.moveDown(1);
+
+    const [photos] = await pool.query(
+      `SELECT id, file_name, file_path, mime_type, uploaded_at FROM attachments
+       WHERE entity_type = 'ehs_record' AND entity_id = ? ORDER BY uploaded_at, id`, [eh.id]
+    );
+    await photoSection(doc, 'EHS Photos', photos.filter(isImageAttachment));
+  }
 }
 
 async function buildTicketPdf(id) {
@@ -269,12 +353,27 @@ async function buildTicketPdf(id) {
     }
   }
 
+  await ehsSection(doc, id);
+
+  // Before = stage 'creation', After = stage 'completion' (same grouping as the
+  // work order detail page); anything else attached to the work order follows.
+  const [woAtts] = await pool.query(
+    `SELECT id, stage, file_name, file_path, mime_type, uploaded_at FROM attachments
+     WHERE entity_type = 'work_order' AND entity_id = ? ORDER BY uploaded_at, id`, [id]
+  );
+  const woPhotos = woAtts.filter(isImageAttachment);
+  await photoSection(doc, 'Before Photos', woPhotos.filter((a) => a.stage === 'creation'));
+  await photoSection(doc, 'After Photos', woPhotos.filter((a) => a.stage === 'completion'));
+  await photoSection(doc, 'Other Photos', woPhotos.filter((a) => a.stage !== 'creation' && a.stage !== 'completion'));
+
   sectionTitle(doc, 'Activity & Process History');
   history.forEach((h) => historyEntry(doc, h, record.wo_type));
 
   doc.end();
   return done;
 }
+
+export { buildTicketPdf };
 
 router.get('/export/pdf/:id', authorizeModule('wo_reports', 'view'), async (req, res) => {
   const buffer = await buildTicketPdf(req.params.id);

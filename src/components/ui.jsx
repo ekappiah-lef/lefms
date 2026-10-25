@@ -112,10 +112,10 @@ export function PageHeader({ title, subtitle, actions, back }) {
       {back}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-slate-900">{title}</h1>
+          <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900">{title}</h1>
           {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
     </div>
   );
@@ -134,9 +134,9 @@ export function BackLink({ onClick, children = 'Back' }) {
 // ---------------------------------------------------------------------
 export function SectionCard({ title, action, children, className = '' }) {
   return (
-    <div className={`bg-white border border-slate-200 rounded-2xl p-5 shadow-sm ${className}`}>
+    <div className={`bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-5 shadow-sm min-w-0 ${className}`}>
       {(title || action) && (
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           {title && <h3 className="text-base font-display font-bold text-slate-800">{title}</h3>}
           {action}
         </div>
@@ -237,7 +237,7 @@ export function FilterBar({ search, onSearch, placeholder = 'Search…', childre
   return (
     <div className="flex flex-wrap items-center gap-2 mb-4">
       {onSearch && (
-        <div className="relative w-full max-w-[220px]">
+        <div className="relative w-full sm:max-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             value={search}
@@ -312,7 +312,7 @@ export function DateInput({ value, onChange, placeholder }) {
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="py-2 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
+      className="w-full sm:w-auto py-2 px-3 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
     />
   );
 }
@@ -405,8 +405,8 @@ export function Modal({ open, onClose, title, subtitle, children, footer, width 
   return createPortal(
     <div onClick={onClose} className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 backdrop-blur-sm p-4 sm:p-6">
       <div className={`w-full ${width} bg-white rounded-2xl shadow-2xl my-4 sm:my-8`} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between border-b border-slate-100 px-7 py-5">
-          <div>
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 sm:px-7 py-4 sm:py-5">
+          <div className="min-w-0">
             <h2 className="text-lg font-display font-extrabold text-slate-900">{title}</h2>
             {subtitle && <p className="text-[13px] text-slate-500 mt-0.5">{subtitle}</p>}
           </div>
@@ -414,8 +414,8 @@ export function Modal({ open, onClose, title, subtitle, children, footer, width 
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="px-7 py-6">{children}</div>
-        {footer && <div className="flex flex-wrap items-center justify-center gap-2 border-t border-slate-100 px-7 py-4 bg-slate-50 rounded-b-2xl">{footer}</div>}
+        <div className="px-4 sm:px-7 py-5 sm:py-6">{children}</div>
+        {footer && <div className="flex flex-wrap items-center justify-center gap-2 border-t border-slate-100 px-4 sm:px-7 py-4 bg-slate-50 rounded-b-2xl">{footer}</div>}
       </div>
     </div>,
     document.body
@@ -488,7 +488,7 @@ export function RadioGroup({ options, value, onChange, name }) {
 // ---------------------------------------------------------------------
 export function Field({ label, value, full }) {
   return (
-    <div className={full ? 'col-span-2' : ''}>
+    <div className={full ? 'sm:col-span-2' : ''}>
       <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">{label}</div>
       <div className="text-sm text-slate-800 font-medium mt-0.5">{value || ' '}</div>
     </div>
@@ -595,7 +595,7 @@ export function Placeholder({ title, icon: Icon, phase = 'Phase 2', bullets = []
         </div>
       </div>
       {bullets.length > 0 && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {bullets.map((b) => (
             <div key={b} className="bg-white border border-slate-200 rounded-xl p-4 text-sm font-medium text-slate-700 shadow-sm">
               {b}

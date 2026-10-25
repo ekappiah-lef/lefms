@@ -34,9 +34,9 @@ export default function TroubleTicketReports() {
       <SectionCard title="Raw Data Export (Excel)">
         <p className="text-sm text-slate-500 mb-3">Export all Trouble Tickets into Excel, including the Work Order each was converted to (if any).</p>
         <FilterBar>
-          <Select className="w-40" value={status} onChange={setStatus} options={Object.entries(TT_STATUS_LABELS).map(([value, label]) => ({ value, label }))} label="All statuses" />
-          <Select className="w-44" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
-          <Select className="w-40" value={priority} onChange={setPriority} options={PRIORITIES} label="All priorities" />
+          <Select className="w-full sm:w-40" value={status} onChange={setStatus} options={Object.entries(TT_STATUS_LABELS).map(([value, label]) => ({ value, label }))} label="All statuses" />
+          <Select className="w-full sm:w-44" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
+          <Select className="w-full sm:w-40" value={priority} onChange={setPriority} options={PRIORITIES} label="All priorities" />
           <DateInput value={from} onChange={setFrom} />
           <span className="text-slate-400 text-xs">to</span>
           <DateInput value={to} onChange={setTo} />

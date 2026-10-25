@@ -21,7 +21,7 @@ export default function SpareReports() {
       <PageHeader title="Spare Reports" subtitle="Current inventory  status" />
       <SectionCard title="Raw Data Export (Excel)">
         <FilterBar>
-          <Select className="w-48" value={type} onChange={setType} options={TX_TYPES} label="All transaction types" />
+          <Select className="w-full sm:w-48" value={type} onChange={setType} options={TX_TYPES} label="All transaction types" />
           <DateInput value={from} onChange={setFrom} />
           <span className="text-slate-400 text-xs">to</span>
           <DateInput value={to} onChange={setTo} />

@@ -47,9 +47,9 @@ export default function EhsWorkOrders({ user, openDetail }) {
       )}
 
       <FilterBar>
-        <Select className="w-40" value={status} onChange={setStatus} options={Object.entries(EHS_LABEL).map(([value, label]) => ({ value, label }))} label="All statuses" />
-        <Select className="w-40" value={woType} onChange={setWoType} options={[{ value: 'CM', label: 'Corrective' }, { value: 'PM', label: 'Preventive' }, { value: 'PLM', label: 'Planned' }]} label="All types" />
-        <Select className="w-44" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
+        <Select className="w-full sm:w-40" value={status} onChange={setStatus} options={Object.entries(EHS_LABEL).map(([value, label]) => ({ value, label }))} label="All statuses" />
+        <Select className="w-full sm:w-40" value={woType} onChange={setWoType} options={[{ value: 'CM', label: 'Corrective' }, { value: 'PM', label: 'Preventive' }, { value: 'PLM', label: 'Planned' }]} label="All types" />
+        <Select className="w-full sm:w-44" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
       </FilterBar>
 
       <Table headers={['EHS No', 'Work Order', 'Type', 'Site', 'Region', 'Engineer', 'Status', 'Outcome']} empty={loading ? 'Loading…' : 'No EHS records found'}>

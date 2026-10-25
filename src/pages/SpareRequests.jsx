@@ -42,7 +42,7 @@ export default function SpareRequests({ user }) {
       )}
 
       <FilterBar>
-        <Select className="w-48" value={status} onChange={setStatus} options={Object.keys(STATUS_TONE).map((s) => ({ value: s, label: s }))} label="All statuses" />
+        <Select className="w-full sm:w-48" value={status} onChange={setStatus} options={Object.keys(STATUS_TONE).map((s) => ({ value: s, label: s }))} label="All statuses" />
       </FilterBar>
 
       <Table headers={['Request No', 'Work Order', 'Site', 'Region', 'Requested By', 'Status', 'Created']} empty={loading ? 'Loading…' : 'No spare requests found'}>

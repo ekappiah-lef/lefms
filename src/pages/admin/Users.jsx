@@ -81,7 +81,7 @@ function ViewUser({ user, onClose }) {
   return (
     <Modal open onClose={onClose} title={user.fullName} subtitle={user.staffNo}
       footer={<Button variant="ghost" onClick={onClose}>Close</Button>}>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Staff No." value={user.staffNo} />
         <Field label="Role" value={user.role} />
         <Field label="Email" value={user.email} />
@@ -121,7 +121,7 @@ function NewUser({ roles, regions, onClose, onCreated }) {
     <Modal open onClose={onClose} title="New User"
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={!canSave || busy}>{busy ? 'Creating…' : 'Create User'}</Button></>}>
       {error && <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div><label className="text-[11px] font-semibold text-slate-600">Staff No.</label><input value={f.staffNo} onChange={(e) => set('staffNo')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Full Name</label><input value={f.fullName} onChange={(e) => set('fullName')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Email</label><input type="email" value={f.email} onChange={(e) => set('email')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
@@ -167,7 +167,7 @@ function EditUser({ user, roles, regions, onClose, onSaved }) {
     <Modal open onClose={onClose} title={`Edit ${user.fullName}`} subtitle={user.staffNo}
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={!canSave || busy}>{busy ? 'Saving…' : 'Save Changes'}</Button></>}>
       {error && <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div><label className="text-[11px] font-semibold text-slate-600">Full Name</label><input value={f.fullName} onChange={(e) => set('fullName')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Email</label><input type="email" value={f.email} onChange={(e) => set('email')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Phone</label><input value={f.phone} onChange={(e) => set('phone')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>

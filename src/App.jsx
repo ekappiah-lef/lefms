@@ -38,6 +38,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [logoutNotice, setLogoutNotice] = useState('');
   const [idleWarning, setIdleWarning] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // "Pages" for Create/Detail (not modals)   a flat virtual route on top of
   // the existing tab router, remembering where to go "Back" to.
@@ -105,7 +106,9 @@ export default function App() {
   if (!currentUser) return <Login onLogin={handleLogin} notice={logoutNotice} />;
 
   const accessUser = { role: currentUser.role, roleId: currentUser.roleId, id: currentUser.id, regionId: currentUser.regionId, regionName: currentUser.regionName, permissions: currentUser.permissions };
-  const navigate = (tab) => { if (tab === 'dashboard' || canAccess(accessUser, tab)) setCurrentTab(tab); };
+  const navigate = (tab) => {
+    if (tab === 'dashboard' || canAccess(accessUser, tab)) { setCurrentTab(tab); setMenuOpen(false); }
+  };
 
   const openCreate = (type, extra = {}) => {
     if (!isVirtual(currentTab)) setReturnTab(currentTab);
@@ -162,16 +165,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar user={accessUser} currentTab={currentTab} setCurrentTab={navigate} />
-      <div className="flex flex-col min-h-screen pl-64">
-        <Header currentUser={currentUser} currentTab={currentTab} onLogout={() => handleLogout()} />
-        <main className="flex-1 p-4 sm:p-6 max-w-[1500px] w-full mx-auto overflow-x-hidden">
+      <Sidebar user={accessUser} currentTab={currentTab} setCurrentTab={navigate} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <div className="flex flex-col min-h-screen lg:pl-64">
+        <Header currentUser={currentUser} currentTab={currentTab} onLogout={() => handleLogout()} onMenu={() => setMenuOpen(true)} />
+        <main className="flex-1 min-w-0 p-3 sm:p-6 max-w-[1500px] w-full mx-auto overflow-x-hidden">
           {renderTab()}
         </main>
       </div>
 
       {idleWarning && (
-        <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-xl border border-amber-200 bg-white shadow-lg p-4">
+        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-5 sm:right-5 z-50 sm:max-w-sm rounded-xl border border-amber-200 bg-white shadow-lg p-4">
           <p className="text-sm font-semibold text-slate-800">Still there?</p>
           <p className="text-[13px] text-slate-500 mt-1">
             You'll be logged out in about {Math.round(IDLE_WARNING_MS / 1000)} seconds due to inactivity.

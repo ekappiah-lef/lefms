@@ -135,7 +135,7 @@ function EditPermissions({ role, modules, onClose, onSaved }) {
                 {g.items.map((m) => (
                   <div key={m.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2.5">
                     <span className="text-[13px] font-medium text-slate-700">{m.label}</span>
-                    <div className="w-40">
+                    <div className="w-36 sm:w-40 shrink-0">
                       <Select value={perms[m.id] || ''} onChange={(v) => setLevel(m.id, v)}
                         options={isMsUser ? LEVEL_OPTIONS.filter((o) => o.value !== 'manage') : LEVEL_OPTIONS} />
                     </div>

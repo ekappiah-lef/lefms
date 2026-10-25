@@ -96,15 +96,15 @@ export default function EhsRecordDetail({ id, user, onBack }) {
         <Badge tone={EHS_TONE[ehs.status]}>{EHS_LABEL[ehs.status]}</Badge>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 mb-5">
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-7 lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-7 lg:col-span-2">
           <p className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-5">EHS Checklist</p>
           <div className="space-y-2">
             {(ehs.checklist || []).map((c) => (
               <div key={c.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2">
                 <span className="text-[13px] text-slate-700">{c.question}</span>
                 {canSubmit ? (
-                  <Select className="w-28" value={checklistDraft[c.id] || 'N/A'} onChange={(v) => setChecklistDraft((s) => ({ ...s, [c.id]: v }))} options={['Yes', 'No', 'N/A']} />
+                  <Select className="w-28 shrink-0" value={checklistDraft[c.id] || 'N/A'} onChange={(v) => setChecklistDraft((s) => ({ ...s, [c.id]: v }))} options={['Yes', 'No', 'N/A']} />
                 ) : (
                   <Badge tone={c.response === 'Yes' ? 'green' : c.response === 'No' ? 'red' : 'slate'}>{c.response || 'Not answered'}</Badge>
                 )}
@@ -185,7 +185,7 @@ export default function EhsRecordDetail({ id, user, onBack }) {
         {(ehs.history || []).map((h) => (
           <div key={h.id} className="bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex items-center gap-3">
             <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${(HISTORY_STYLE[h.action] || HISTORY_STYLE.Create).dot}`} />
-            <span className={`text-[11px] font-black tracking-wide shrink-0 w-[110px] ${(HISTORY_STYLE[h.action] || HISTORY_STYLE.Create).text}`}>{(HISTORY_STYLE[h.action] || HISTORY_STYLE.Create).label}</span>
+            <span className={`text-[11px] font-black tracking-wide shrink-0 w-[96px] sm:w-[110px] ${(HISTORY_STYLE[h.action] || HISTORY_STYLE.Create).text}`}>{(HISTORY_STYLE[h.action] || HISTORY_STYLE.Create).label}</span>
             <span className="text-[13px] text-slate-600 flex-1 truncate">{h.note}</span>
             <span className="text-[12px] text-slate-400 whitespace-nowrap shrink-0">{h.actor} · {fmt(h.created_at)}</span>
           </div>

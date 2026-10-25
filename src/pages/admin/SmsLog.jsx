@@ -28,8 +28,8 @@ export default function SmsLog() {
       <PageHeader title="SMS Log" subtitle="Every SMS alert LEF MS has attempted to send, delivered or failed" />
 
       <FilterBar>
-        <Select className="w-40" value={status} onChange={setStatus} options={['sent', 'failed']} label="All statuses" />
-        <Select className="w-52" value={eventType} onChange={setEventType} options={Object.entries(EVENT_LABEL).map(([value, label]) => ({ value, label }))} label="All events" />
+        <Select className="w-full sm:w-40" value={status} onChange={setStatus} options={['sent', 'failed']} label="All statuses" />
+        <Select className="w-full sm:w-52" value={eventType} onChange={setEventType} options={Object.entries(EVENT_LABEL).map(([value, label]) => ({ value, label }))} label="All events" />
         <DateInput value={from} onChange={setFrom} />
         <span className="text-slate-400 text-xs">to</span>
         <DateInput value={to} onChange={setTo} />

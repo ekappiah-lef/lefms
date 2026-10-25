@@ -98,8 +98,8 @@ export default function TroubleTicketDetailPage({ id, user, onBack, onOpenWorkOr
         <Badge tone={TT_STATUS_TONE[ticket.status]}>{TT_STATUS_LABELS[ticket.status]}</Badge>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 mb-5">
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-7 lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-7 lg:col-span-2">
           <p className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-5">Trouble Ticket Details</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-5">
             <Field label="Site" value={`${ticket.siteCode}   ${ticket.siteName}`} />
@@ -220,13 +220,13 @@ function HistoryItem({ h }) {
   const style = HISTORY_STYLE[h.action] || HISTORY_STYLE.update;
   return (
     <details className="bg-white border border-slate-200 rounded-xl overflow-hidden" open={open} onToggle={(e) => setOpen(e.target.open)}>
-      <summary className="list-none flex items-center gap-3 px-5 py-3.5 cursor-pointer select-none">
+      <summary className="list-none flex items-center gap-3 px-3 sm:px-5 py-3.5 cursor-pointer select-none flex-wrap">
         <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${style.dot}`} />
-        <span className={`text-[11px] font-black tracking-wide shrink-0 w-[110px] ${style.text}`}>{style.label}</span>
+        <span className={`text-[11px] font-black tracking-wide shrink-0 w-[96px] sm:w-[110px] ${style.text}`}>{style.label}</span>
         <span className="text-[13px] text-slate-600 flex-1 truncate"></span>
         <span className="text-[12px] text-slate-400 whitespace-nowrap shrink-0">{h.actor} · {fmtShort(h.created_at)}</span>
       </summary>
-      <div className="px-5 pb-5 pt-3 border-t border-slate-50">
+      <div className="px-3 sm:px-5 pb-5 pt-3 border-t border-slate-50">
         <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5">Details</div>
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-[13px] text-slate-700 leading-relaxed whitespace-pre-wrap">
           {h.note}

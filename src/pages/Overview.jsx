@@ -62,7 +62,7 @@ export default function Overview({ user }) {
 
       <SectionHeading dot="bg-rose-500">Trouble Tickets</SectionHeading>
 
-   <div className="grid lg:grid-cols-2 gap-4">
+   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
   <SectionCard title="Trouble Ticket Issues by Data Centre">
     <ResponsiveContainer width="100%" height={280}>
       <BarChart
@@ -173,14 +173,14 @@ export default function Overview({ user }) {
 </SectionCard>
 </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <DonutBreakdown title="Issues by System / Fault Type" data={ttByCategory} totalLabel="Trouble Tickets" />
         <LabeledPieChart title="Issues by System / Fault Type" data={ttByCategory} />
       </div>
 
       <SectionHeading dot="bg-indigo-500">Work Orders</SectionHeading>
 
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SectionCard title="Work Orders by Region" className="lg:col-span-2">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={regionBar} margin={{ left: -18, right: 10 }}>
@@ -202,7 +202,7 @@ export default function Overview({ user }) {
         <DonutBreakdown title="All Status" data={statusDonut} totalLabel="Work Orders" />
       </div>
 
-      <div className="grid lg:grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-4">
         <SectionCard title="Work Orders by Data Center">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={siteBar} margin={{ left: -18, right: 10 }}>
@@ -222,7 +222,7 @@ export default function Overview({ user }) {
         </SectionCard>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SectionCard title="Work Orders Created   Monthly Trend" className="lg:col-span-2">
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={trend} margin={{ left: -18, right: 10, top: 10 }}>
@@ -239,7 +239,7 @@ export default function Overview({ user }) {
         <DonutBreakdown title="Assets by Status" data={assetsDonut} totalLabel="Assets" />
       </div>
 
-      <div className={isMsUser ? 'grid grid-cols-1 gap-4' : 'grid lg:grid-cols-2 gap-4'}>
+      <div className={isMsUser ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 lg:grid-cols-2 gap-4'}>
         {!isMsUser && (
           <SectionCard title="Engineer Performance">
             <Table headers={['Engineer', 'Assigned', 'Completed', 'Closed', 'Completion Rate']}>

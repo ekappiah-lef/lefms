@@ -50,7 +50,7 @@ export default function SiteDatabase({ user }) {
       </KpiGrid>
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search site ID or name…">
-        <Select className="w-48" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
+        <Select className="w-full sm:w-48" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
       </FilterBar>
 
       <Table headers={['Site ID', 'Name', 'Region', 'Location', 'Priority', 'Assigned Engineer', 'Status']} empty={loading ? 'Loading…' : 'No sites found'}>
@@ -71,7 +71,7 @@ export default function SiteDatabase({ user }) {
       {selected && (
         <Modal open onClose={() => setSelected(null)} title={selected.name} subtitle={selected.siteCode}
           footer={<Button variant="ghost" onClick={() => setSelected(null)}>Close</Button>}>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Region" value={selected.regionName} />
             <Field label="Priority" value={<Badge tone={PRIORITY_TONE[selected.priority]}>{selected.priority}</Badge>} />
             <Field label="Location" value={selected.location} full />
@@ -119,13 +119,13 @@ function NewSite({ regions, engineers, onClose, onCreated }) {
     <Modal open onClose={onClose} title="New Site" subtitle="Add a site to the Site Database"
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save} disabled={!canSave || busy}>{busy ? 'Creating…' : 'Create Site'}</Button></>}>
       {error && <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div><label className="text-[11px] font-semibold text-slate-600">Site ID</label><input value={f.siteCode} onChange={(e) => set('siteCode')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Site Name</label><input value={f.name} onChange={(e) => set('name')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Region</label><div className="mt-1"><Select value={f.regionId} onChange={set('regionId')} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="Select region" /></div></div>
         <div><label className="text-[11px] font-semibold text-slate-600">Priority</label><div className="mt-1"><Select value={f.priority} onChange={set('priority')} options={PRIORITIES} /></div></div>
-        <div className="col-span-2"><label className="text-[11px] font-semibold text-slate-600">Location</label><input value={f.location} onChange={(e) => set('location')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
-        <div className="col-span-2"><label className="text-[11px] font-semibold text-slate-600">Assigned Engineer</label><div className="mt-1"><Select value={f.assignedEngineerId} onChange={set('assignedEngineerId')} options={engineers.map((e) => ({ value: String(e.id), label: e.fullName }))} label="No engineer assigned" /></div></div>
+        <div className="sm:col-span-2"><label className="text-[11px] font-semibold text-slate-600">Location</label><input value={f.location} onChange={(e) => set('location')(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary" /></div>
+        <div className="sm:col-span-2"><label className="text-[11px] font-semibold text-slate-600">Assigned Engineer</label><div className="mt-1"><Select value={f.assignedEngineerId} onChange={set('assignedEngineerId')} options={engineers.map((e) => ({ value: String(e.id), label: e.fullName }))} label="No engineer assigned" /></div></div>
       </div>
     </Modal>
   );

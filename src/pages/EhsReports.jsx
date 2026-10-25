@@ -29,8 +29,8 @@ export default function EhsReports() {
       <SectionCard title="Raw Data Export (Excel)">
         <p className="text-sm text-slate-500 mb-3">Export all EHS Records into Excel.</p>
         <FilterBar>
-          <Select className="w-40" value={status} onChange={setStatus} options={Object.entries(EHS_LABEL).map(([value, label]) => ({ value, label }))} label="All statuses" />
-          <Select className="w-44" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
+          <Select className="w-full sm:w-40" value={status} onChange={setStatus} options={Object.entries(EHS_LABEL).map(([value, label]) => ({ value, label }))} label="All statuses" />
+          <Select className="w-full sm:w-44" value={region} onChange={setRegion} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} label="All regions" />
           <DateInput value={from} onChange={setFrom} />
           <span className="text-slate-400 text-xs">to</span>
           <DateInput value={to} onChange={setTo} />

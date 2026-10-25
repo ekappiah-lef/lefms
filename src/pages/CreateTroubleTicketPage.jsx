@@ -72,8 +72,8 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
 
       {error && <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">{error}</div>}
 
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-7">
-        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
           <div>
             <FieldLabel>Site Name or Site</FieldLabel>
             <div className="mt-1"><Select value={f.siteId} onChange={set('siteId')} options={sites.map((s) => ({ value: String(s.id), label: `${s.siteCode}   ${s.name}` }))} label="Select site" /></div>
@@ -99,7 +99,7 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
           <div className="mt-1"><Textarea   value={f.description} onChange={set('description')} rows={5} placeholder="Description of Issue…" /></div>
         </div>
 
-<div className="grid sm:grid-cols-[7fr_3fr] gap-x-8 gap-y-5 mt-5">     
+<div className="grid grid-cols-1 sm:grid-cols-[7fr_3fr] gap-x-8 gap-y-5 mt-5">     
        <div>
             <FieldLabel>Asset (Generator / AC)</FieldLabel>
             <div className="mt-1"><Select value={f.assetId} onChange={set('assetId')} options={assets.map((a) => ({ value: String(a.id), label: `${a.tag}   ${a.name}` }))} label="No specific asset" /></div>
@@ -110,7 +110,7 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-5 mt-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 mt-5">
           <div>
             <FieldLabel>System / Fault Type (optional)</FieldLabel>
             <div className="mt-1"><Select value={f.category} onChange={set('category')} options={TT_CATEGORIES} label="Not categorised" /></div>
@@ -123,7 +123,7 @@ export default function CreateTroubleTicketPage({ onCancel, onCreated }) {
         </div>
 
 
-        <div className="flex justify-center gap-2 mt-7 pt-6 border-t border-slate-100">
+        <div className="flex flex-wrap justify-center gap-2 mt-7 pt-6 border-t border-slate-100">
           <Button  style={{ backgroundColor: '#5e695c' }} onClick={save} disabled={!canSave || busy}>{busy ? 'Creating…' : 'Create Trouble Ticket'}</Button>
           <Button variant="danger" onClick={onCancel}>Cancel</Button>
         </div>
